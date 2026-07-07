@@ -8,6 +8,15 @@ import {
   PaymentError,
   PAYMENT_ERRORS,
 } from '../services/payment';
+import {
+  initiateClaimableBalance,
+  submitClaimableBalance,
+  initiateClaim,
+  submitClaim,
+  getClaimableBalanceStatus,
+  ClaimableBalanceError,
+  CLAIMABLE_ERRORS,
+} from '../services/claimableBalance';
 import { supabaseAdmin } from '../lib/supabase';
 
 const router: ReturnType<typeof Router> = Router();
@@ -163,6 +172,213 @@ router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('[Payments] History error:', error);
     res.status(500).json({ error: 'Failed to fetch purchase history' });
+  }
+});
+
+// POST /api/v1/payments/claimable/initiate — Generate XDR for claimable balance
+router.post('/claimable/initiate', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { karya_id } = req.body;
+    if (!karya_id) {
+      res.status(400).json({ error: 'karya_id is required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await initiateClaimableBalance(karya_id, user.wallet_address);
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Claimable initiate error:', error);
+    if (error instanceof ClaimableBalanceError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to initiate claimable balance' });
+  }
+});
+
+// POST /api/v1/payments/claimable/create — Submit signed claimable balance
+router.post('/claimable/create', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { signed_xdr, karya_id } = req.body;
+    if (!signed_xdr || !karya_id) {
+      res.status(400).json({ error: 'signed_xdr and karya_id are required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await submitClaimableBalance(signed_xdr, karya_id, user.wallet_address);
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Claimable create error:', error);
+    if (error instanceof ClaimableBalanceError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to create claimable balance' });
+  }
+});
+
+// POST /api/v1/payments/claimable/initiate-claim — Generate XDR for claiming
+router.post('/claimable/initiate-claim', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { balance_id } = req.body;
+    if (!balance_id) {
+      res.status(400).json({ error: 'balance_id is required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await initiateClaim(balance_id, user.wallet_address);
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Claimable initiate-claim error:', error);
+    if (error instanceof ClaimableBalanceError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to initiate claim' });
+  }
+});
+
+// POST /api/v1/payments/claimable/claim — Submit signed claim
+router.post('/claimable/claim', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { balance_id, signed_xdr } = req.body;
+    if (!balance_id || !signed_xdr) {
+      res.status(400).json({ error: 'balance_id and signed_xdr are required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await submitClaim(signed_xdr, balance_id, user.wallet_address);
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Claimable claim error:', error);
+    if (error instanceof ClaimableBalanceError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to claim balance' });
+  }
+});
+
+// GET /api/v1/payments/claimable/:balanceId — Get balance status
+router.get('/claimable/:balanceId', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { balanceId } = req.params;
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const status = await getClaimableBalanceStatus(balanceId, user.wallet_address);
+    if (!status) {
+      res.status(404).json({ error: 'Balance not found' });
+      return;
+    }
+
+    res.json(status);
+  } catch (error) {
+    console.error('[Payments] Claimable status error:', error);
+    res.status(500).json({ error: 'Failed to get balance status' });
   }
 });
 

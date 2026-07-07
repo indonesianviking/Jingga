@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { PurchaseFlow } from '@/components/payment/PurchaseFlow';
+import { ClaimPayment } from '@/components/payment/ClaimPayment';
 import { FileAccess } from '@/components/payment/FileAccess';
 import { Spinner } from '@/components/ui/Spinner';
+
+type PaymentMethod = 'direct' | 'claimable' | null;
 
 interface BuyButtonProps {
   karyaId: string;
@@ -17,7 +20,7 @@ interface BuyButtonProps {
 export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurchaseComplete }: BuyButtonProps) {
   const [hasPurchased, setHasPurchased] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
-  const [showPurchase, setShowPurchase] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
 
   useEffect(() => {
     const checkPurchase = async () => {
@@ -62,8 +65,8 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
     return <FileAccess karyaId={karyaId} />;
   }
 
-  // Show purchase flow if user clicked buy
-  if (showPurchase) {
+  // Show direct payment flow
+  if (selectedMethod === 'direct') {
     return (
       <PurchaseFlow
         karyaId={karyaId}
@@ -71,21 +74,51 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
         harga={harga}
         onSuccess={(data) => {
           setHasPurchased(true);
-          setShowPurchase(false);
+          setSelectedMethod(null);
           onPurchaseComplete?.();
         }}
-        onCancel={() => setShowPurchase(false)}
+        onCancel={() => setSelectedMethod(null)}
       />
     );
   }
 
-  // Default: show buy button
+  // Show claimable balance payment flow
+  if (selectedMethod === 'claimable') {
+    return (
+      <ClaimPayment
+        karyaId={karyaId}
+        judul={judul}
+        harga={harga}
+        onSuccess={(data) => {
+          setHasPurchased(true);
+          setSelectedMethod(null);
+          onPurchaseComplete?.();
+        }}
+        onCancel={() => setSelectedMethod(null)}
+      />
+    );
+  }
+
+  // Default: show payment method selection
   return (
-    <button
-      onClick={() => setShowPurchase(true)}
-      className="w-full px-lg py-md bg-accent text-white text-body font-medium hover:bg-accent-hover transition-colors"
-    >
-      Beli Akses — {harga} XLM
-    </button>
+    <div className="space-y-md">
+      <button
+        onClick={() => setSelectedMethod('direct')}
+        className="w-full px-lg py-md bg-accent text-white text-body font-medium hover:bg-accent-hover transition-colors"
+      >
+        Beli Langsung — {harga} XLM
+      </button>
+
+      <button
+        onClick={() => setSelectedMethod('claimable')}
+        className="w-full px-lg py-md border border-hairline text-ink text-body hover:bg-surface-1 transition-colors"
+      >
+        Gunakan Claimable Balance — {harga} XLM
+      </button>
+
+      <p className="text-caption text-ink-subtle text-center">
+        Pembayaran langsung lebih cepat. Claimable Balance menggunakan escrow.
+      </p>
+    </div>
   );
 }
