@@ -1,0 +1,16 @@
+{
+  "name": "jingga",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @jingga/web dev & pnpm --filter @jingga/api dev",
+    "dev:web": "pnpm --filter @jingga/web dev",
+    "dev:api": "pnpm --filter @jingga/api dev",
+    "build": "pnpm --filter @jingga/shared build && pnpm --filter @jingga/api build && pnpm --filter @jingga/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
