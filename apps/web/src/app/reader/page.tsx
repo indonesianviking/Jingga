@@ -41,9 +41,9 @@ export default function ReaderPage() {
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center px-lg">
           <div className="bg-canvas border border-hairline p-xl max-w-md text-center">
-            <h1 className="text-headline text-ink mb-md">Hubungkan Wallet</h1>
+            <h1 className="text-headline text-ink mb-md">Connect Wallet</h1>
             <p className="text-body text-ink-muted mb-lg">
-              Hubungkan wallet Stellar Anda untuk mengakses koleksi karya
+              Connect your Stellar wallet to access your collection
             </p>
             {isFreighterAvailable ? (
               <button
@@ -64,13 +64,13 @@ export default function ReaderPage() {
             )}
             <div className="relative my-md">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hairline"></div></div>
-              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">atau</span></div>
+              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">or</span></div>
             </div>
             <Link
               href="/login"
               className="block w-full border border-hairline text-ink text-button py-sm px-md rounded-none hover:bg-surface-1 transition-colors"
             >
-              Login dengan Email
+              Login with Email
             </Link>
             {authError && <p className="text-body-sm text-semantic-error mt-md">{authError}</p>}
           </div>
@@ -84,9 +84,9 @@ export default function ReaderPage() {
       <div className="mx-auto max-w-[1584px] py-xl px-lg">
         {/* Header */}
         <div className="mb-xl">
-          <h1 className="text-display-md text-ink mb-sm">Koleksi Saya</h1>
+          <h1 className="text-display-md text-ink mb-sm">My Collection</h1>
           <p className="text-body text-ink-muted">
-            Karya-karya yang sudah Anda beli
+            Works you have purchased
           </p>
         </div>
 
@@ -108,7 +108,7 @@ export default function ReaderPage() {
         {/* Purchased Karya */}
         <div className="mb-xl">
           <div className="flex items-center justify-between mb-md">
-            <h2 className="text-card-title text-ink">Karya Saya</h2>
+            <h2 className="text-card-title text-ink">My Works</h2>
           </div>
 
           {/* Kategori tabs */}
@@ -152,14 +152,13 @@ export default function ReaderPage() {
             </div>
           ) : (
             <div className="text-center py-section bg-canvas border border-hairline">
-              <div className="text-4xl mb-md">🛒</div>
-              <h3 className="text-card-title text-ink mb-sm">Belum ada karya</h3>
-              <p className="text-body text-ink-muted mb-md">Mulai jelajahi marketplace untuk menemukan karya menarik!</p>
+              <h3 className="text-card-title text-ink mb-sm">No works yet</h3>
+              <p className="text-body text-ink-muted mb-md">Start exploring the marketplace to discover interesting works!</p>
               <Link
                 href="/marketplace"
                 className="bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors"
               >
-                Jelajahi Marketplace
+                Browse Marketplace
               </Link>
             </div>
           )}
@@ -169,7 +168,7 @@ export default function ReaderPage() {
           {/* Purchase History */}
           <div className="bg-canvas border border-hairline">
             <div className="px-lg py-md border-b border-hairline">
-              <h2 className="text-card-title text-ink">Riwayat Pembelian</h2>
+              <h2 className="text-card-title text-ink">Purchase History</h2>
             </div>
             <div className="p-lg">
               <PurchaseHistory
@@ -182,7 +181,7 @@ export default function ReaderPage() {
           {/* Recommendations */}
           <div className="bg-canvas border border-hairline">
             <div className="px-lg py-md border-b border-hairline">
-              <h2 className="text-card-title text-ink">Rekomendasi untuk Anda</h2>
+              <h2 className="text-card-title text-ink">Recommended for You</h2>
             </div>
             <div className="p-lg">
               <Recommendations

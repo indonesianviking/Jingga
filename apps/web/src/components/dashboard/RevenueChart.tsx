@@ -22,8 +22,7 @@ export default function RevenueChart({ revenue, totalRevenue, loading }: Revenue
   if (revenue.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-3xl mb-3">📊</div>
-        <p className="text-gray-500">Belum ada revenue</p>
+        <p className="text-gray-500">No revenue yet</p>
       </div>
     );
   }
@@ -46,7 +45,7 @@ export default function RevenueChart({ revenue, totalRevenue, loading }: Revenue
                   />
                 ) : (
                   <div className="w-6 h-6 rounded bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-xs flex-shrink-0">
-                    {item.judul.charAt(0)}
+                    {item.judul.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <span className="font-medium text-gray-900 truncate">{item.judul}</span>

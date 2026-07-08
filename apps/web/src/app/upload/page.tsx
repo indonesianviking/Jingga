@@ -40,11 +40,11 @@ export default function UploadPage() {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setMessage({ type: 'error', text: 'File harus dipilih' });
+      setMessage({ type: 'error', text: 'Please select a file' });
       return;
     }
     if (!form.judul.trim()) {
-      setMessage({ type: 'error', text: 'Judul harus diisi' });
+      setMessage({ type: 'error', text: 'Title is required' });
       return;
     }
 
@@ -73,12 +73,12 @@ export default function UploadPage() {
         throw new Error(err.error || 'Upload failed');
       }
 
-      setMessage({ type: 'success', text: 'Karya berhasil diupload! 🎉' });
+      setMessage({ type: 'success', text: 'Work uploaded successfully!' });
       setForm({ judul: '', deskripsi: '', kategori: 'fiksi', harga: '' });
       setFile(null);
       setCover(null);
     } catch (err: unknown) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Upload gagal' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Upload failed' });
     } finally {
       setUploading(false);
     }
@@ -100,9 +100,9 @@ export default function UploadPage() {
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center px-lg">
           <div className="bg-canvas border border-hairline p-xl max-w-md text-center">
-            <h1 className="text-headline text-ink mb-md">Hubungkan Wallet</h1>
+            <h1 className="text-headline text-ink mb-md">Connect Wallet</h1>
             <p className="text-body text-ink-muted mb-lg">
-              Hubungkan wallet Stellar Anda untuk mengupload karya
+              Connect your Stellar wallet to upload works
             </p>
             {isFreighterAvailable ? (
               <button
@@ -133,14 +133,14 @@ export default function UploadPage() {
       <div className="mx-auto max-w-[800px] py-xl px-lg">
         {/* Header */}
         <div className="mb-xl">
-          <h1 className="text-display-md text-ink mb-sm">Upload Karya</h1>
+          <h1 className="text-display-md text-ink mb-sm">Upload Work</h1>
           <p className="text-body text-ink-muted mb-md">
-            Upload file karya Anda langsung ke Jingga
+            Upload your work directly to Jingga
           </p>
           <div className="bg-surface-1 border border-hairline p-md">
             <p className="text-body-sm text-ink-muted">
-              💡 <strong>Mau menulis langsung?</strong>{' '}
-              <a href="/editor" className="text-primary hover:underline">Gunakan Editor kami</a> untuk menulis, edit, dan publish karya — semua dalam satu halaman.
+              <strong>Prefer to write directly?</strong>{' '}
+              <a href="/editor" className="text-primary hover:underline">Use our Editor</a> to write, edit, and publish — all in one page.
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function UploadPage() {
           <div className="space-y-lg">
             {/* File Upload */}
             <div>
-              <label className="block text-body-sm text-ink-muted mb-xs">File Karya *</label>
+              <label className="block text-body-sm text-ink-muted mb-xs">Work File *</label>
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-hairline p-lg text-center cursor-pointer hover:border-primary transition-colors"
@@ -173,8 +173,7 @@ export default function UploadPage() {
                   </div>
                 ) : (
                   <div>
-                    <div className="text-4xl mb-sm">📄</div>
-                    <p className="text-body text-ink-muted">Klik untuk memilih file</p>
+                    <p className="text-body text-ink-muted">Click to select a file</p>
                     <p className="text-caption text-ink-subtle">PDF, DOCX, TXT (max 50MB)</p>
                   </div>
                 )}
@@ -190,7 +189,7 @@ export default function UploadPage() {
 
             {/* Cover Image */}
             <div>
-              <label className="block text-body-sm text-ink-muted mb-xs">Cover Image (opsional)</label>
+              <label className="block text-body-sm text-ink-muted mb-xs">Cover Image (optional)</label>
               <div
                 onClick={() => coverInputRef.current?.click()}
                 className="border-2 border-dashed border-hairline p-md text-center cursor-pointer hover:border-primary transition-colors"
@@ -205,7 +204,7 @@ export default function UploadPage() {
                     <p className="text-body-sm text-ink">{cover.name}</p>
                   </div>
                 ) : (
-                  <p className="text-body-sm text-ink-muted">Klik untuk memilih cover image</p>
+                  <p className="text-body-sm text-ink-muted">Click to select a cover image</p>
                 )}
               </div>
               <input
@@ -220,30 +219,30 @@ export default function UploadPage() {
             {/* Metadata */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
               <div className="md:col-span-2">
-                <label className="block text-body-sm text-ink-muted mb-xs">Judul *</label>
+                <label className="block text-body-sm text-ink-muted mb-xs">Title *</label>
                 <input
                   type="text"
                   value={form.judul}
                   onChange={(e) => setForm({ ...form, judul: e.target.value })}
-                  placeholder="Judul karya Anda"
+                  placeholder="Enter your work title"
                   className="w-full px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary"
                   required
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-body-sm text-ink-muted mb-xs">Deskripsi</label>
+                <label className="block text-body-sm text-ink-muted mb-xs">Description</label>
                 <textarea
                   value={form.deskripsi}
                   onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
-                  placeholder="Deskripsi singkat tentang karya Anda"
+                  placeholder="Brief description of your work"
                   rows={3}
                   className="w-full px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-body-sm text-ink-muted mb-xs">Kategori</label>
+                <label className="block text-body-sm text-ink-muted mb-xs">Category</label>
                 <select
                   value={form.kategori}
                   onChange={(e) => setForm({ ...form, kategori: e.target.value })}
@@ -257,7 +256,7 @@ export default function UploadPage() {
               </div>
 
               <div>
-                <label className="block text-body-sm text-ink-muted mb-xs">Harga (XLM) *</label>
+                <label className="block text-body-sm text-ink-muted mb-xs">Price (XLM) *</label>
                 <input
                   type="number"
                   value={form.harga}
@@ -278,7 +277,7 @@ export default function UploadPage() {
                 disabled={uploading}
                 className="flex-1 bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors disabled:opacity-50"
               >
-                {uploading ? 'Mengupload...' : '🚀 Upload & Publish'}
+                {uploading ? 'Uploading...' : 'Upload & Publish'}
               </button>
             </div>
           </div>

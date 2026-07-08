@@ -277,7 +277,7 @@ export default function JinggaEditor({
             active={editor.isActive('link')}
             title="Add Link"
           >
-            🔗
+            Link
           </ToolbarButton>
 
           {/* Image */}
@@ -285,7 +285,7 @@ export default function JinggaEditor({
             onClick={() => fileInputRef.current?.click()}
             title="Insert Image"
           >
-            🖼️
+            Img
           </ToolbarButton>
 
           {/* Horizontal rule */}

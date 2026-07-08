@@ -23,8 +23,7 @@ export default function PurchaseHistory({ purchases, loading }: PurchaseHistoryP
   if (purchases.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-3xl mb-3">🛒</div>
-        <p className="text-gray-500">Belum ada pembelian</p>
+        <p className="text-gray-500">No purchases yet</p>
       </div>
     );
   }
@@ -34,10 +33,10 @@ export default function PurchaseHistory({ purchases, loading }: PurchaseHistoryP
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
-            <th className="pb-3 font-medium">Karya</th>
-            <th className="pb-3 font-medium">Penulis</th>
-            <th className="pb-3 font-medium text-right">Harga</th>
-            <th className="pb-3 font-medium">Tanggal</th>
+            <th className="pb-3 font-medium">Work</th>
+            <th className="pb-3 font-medium">Author</th>
+            <th className="pb-3 font-medium text-right">Price</th>
+            <th className="pb-3 font-medium">Date</th>
             <th className="pb-3 font-medium text-right">TX</th>
           </tr>
         </thead>
@@ -55,7 +54,7 @@ export default function PurchaseHistory({ purchases, loading }: PurchaseHistoryP
                     />
                   ) : (
                     <div className="w-8 h-8 rounded bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-xs">
-                      📖
+                      W
                     </div>
                   )}
                   <div className="font-medium text-gray-900 text-sm">{purchase.judul}</div>
@@ -69,7 +68,7 @@ export default function PurchaseHistory({ purchases, loading }: PurchaseHistoryP
               </td>
               <td className="py-3">
                 <span className="text-sm text-gray-500">
-                  {new Date(purchase.purchased_at).toLocaleDateString('id-ID', {
+                  {new Date(purchase.purchased_at).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',

@@ -49,7 +49,7 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
   if (isOwner) {
     return (
       <div className="bg-surface-1 border border-hairline p-md text-center">
-        <p className="text-body-sm text-ink-muted">Ini adalah karya Anda</p>
+        <p className="text-body-sm text-ink-muted">This is your work</p>
       </div>
     );
   }
@@ -108,18 +108,18 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
         onClick={() => setSelectedMethod('direct')}
         className="w-full px-lg py-md bg-accent text-white text-body font-medium hover:bg-accent-hover transition-colors"
       >
-        Beli Langsung — {harga} XLM
+        Buy Now — {harga} XLM
       </button>
 
       <button
         onClick={() => setSelectedMethod('claimable')}
         className="w-full px-lg py-md border border-hairline text-ink text-body hover:bg-surface-1 transition-colors"
       >
-        Gunakan Claimable Balance — {harga} XLM
+        Use Claimable Balance — {harga} XLM
       </button>
 
       <p className="text-caption text-ink-subtle text-center">
-        Pembayaran langsung lebih cepat. Claimable Balance menggunakan escrow.
+        Direct payment is faster. Claimable Balance uses escrow.
       </p>
     </div>
   );

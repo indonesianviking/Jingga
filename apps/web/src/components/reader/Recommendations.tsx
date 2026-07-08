@@ -27,11 +27,10 @@ export default function Recommendations({ recommendations, favoriteCategory, loa
   if (recommendations.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-3xl mb-3">✨</div>
         <p className="text-gray-500">
           {favoriteCategory
-            ? `Beli karya "${favoriteCategory}" lainnya untuk melihat rekomendasi`
-            : 'Beli karya pertama untuk mendapatkan rekomendasi'}
+            ? `Buy more "${favoriteCategory}" works to see recommendations`
+            : 'Buy your first work to get recommendations'}
         </p>
       </div>
     );
@@ -41,7 +40,7 @@ export default function Recommendations({ recommendations, favoriteCategory, loa
     <div>
       {favoriteCategory && (
         <p className="text-sm text-gray-500 mb-4">
-          Berdasarkan preferensi Anda dalam genre <span className="font-medium text-gray-700">{favoriteCategory}</span>
+          Based on your preference in <span className="font-medium text-gray-700">{favoriteCategory}</span>
         </p>
       )}
       <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
@@ -61,7 +60,7 @@ export default function Recommendations({ recommendations, favoriteCategory, loa
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                  <span className="text-3xl">📖</span>
+                  <span className="text-3xl text-gray-300">W</span>
                 </div>
               )}
             </div>

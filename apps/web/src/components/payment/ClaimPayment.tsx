@@ -140,8 +140,8 @@ export function ClaimPayment({
             </svg>
           </div>
           <div>
-            <h3 className="text-card-title text-ink">Pembayaran Berhasil!</h3>
-            <p className="text-body-sm text-ink-muted">Balance telah di-claim</p>
+            <h3 className="text-card-title text-ink">Payment Successful!</h3>
+            <p className="text-body-sm text-ink-muted">Balance has been claimed</p>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export function ClaimPayment({
             </svg>
           </div>
           <div>
-            <h3 className="text-card-title text-ink">Pembayaran Gagal</h3>
+            <h3 className="text-card-title text-ink">Payment Failed</h3>
             <p className="text-body-sm text-ink-muted">{error}</p>
           </div>
         </div>
@@ -203,14 +203,14 @@ export function ClaimPayment({
             onClick={handlePurchase}
             className="flex-1 px-lg py-md bg-accent text-white text-body hover:bg-accent-hover transition-colors"
           >
-            Coba Lagi
+            Try Again
           </button>
           {onCancel && (
             <button
               onClick={onCancel}
               className="px-lg py-md border border-hairline text-ink text-body hover:bg-surface-1 transition-colors"
             >
-              Batal
+              Cancel
             </button>
           )}
         </div>
@@ -225,15 +225,15 @@ export function ClaimPayment({
           <Spinner size="md" />
           <div>
             <h3 className="text-card-title text-ink">
-              {state === 'initiating' && 'Menyiapkan claimable balance...'}
-              {state === 'signing_create' && 'Menunggu konfirmasi wallet...'}
-              {state === 'submitting_create' && 'Mengirim transaksi ke Stellar...'}
-              {state === 'initiating_claim' && 'Menyiapkan claim...'}
-              {state === 'signing_claim' && 'Menunggu konfirmasi claim...'}
-              {state === 'submitting_claim' && 'Memproses claim...'}
+              {state === 'initiating' && 'Preparing claimable balance...'}
+              {state === 'signing_create' && 'Waiting for wallet confirmation...'}
+              {state === 'submitting_create' && 'Submitting transaction to Stellar...'}
+              {state === 'initiating_claim' && 'Preparing claim...'}
+              {state === 'signing_claim' && 'Waiting for claim confirmation...'}
+              {state === 'submitting_claim' && 'Processing claim...'}
             </h3>
             <p className="text-body-sm text-ink-muted">
-              {(state === 'signing_create' || state === 'signing_claim') && 'Freighter popup terbuka di browser'}
+              {(state === 'signing_create' || state === 'signing_claim') && 'Freighter popup opened in browser'}
             </p>
           </div>
         </div>
@@ -244,20 +244,20 @@ export function ClaimPayment({
   // Idle state
   return (
     <div className="bg-canvas border border-hairline p-xl">
-      <h3 className="text-card-title text-ink mb-sm">Pembayaran via Claimable Balance</h3>
+      <h3 className="text-card-title text-ink mb-sm">Payment via Claimable Balance</h3>
       <p className="text-body text-ink-muted mb-lg">
-        Bayar {harga} XLM untuk mengakses &ldquo;{judul}&rdquo; menggunakan escrow
+        Pay {harga} XLM to access &ldquo;{judul}&rdquo; using escrow
       </p>
 
       <div className="bg-surface-2 p-md mb-lg text-body-sm text-ink-muted">
-        <p>Claimable Balance adalah mekanisme escrow di Stellar. Pembayaran akan di-hold sampai claim berhasil.</p>
+        <p>Claimable Balance is Stellar's escrow mechanism. Payment will be held until the claim succeeds.</p>
       </div>
 
       <button
         onClick={handlePurchase}
         className="w-full px-lg py-md bg-accent text-white text-body font-medium hover:bg-accent-hover transition-colors"
       >
-        Buat & Claim Balance — {harga} XLM
+        Create & Claim Balance — {harga} XLM
       </button>
     </div>
   );

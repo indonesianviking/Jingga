@@ -125,8 +125,8 @@ export function PurchaseFlow({
             </svg>
           </div>
           <div>
-            <h3 className="text-card-title text-ink">Pembayaran Berhasil!</h3>
-            <p className="text-body-sm text-ink-muted">Akses file telah dibuka</p>
+            <h3 className="text-card-title text-ink">Payment Successful!</h3>
+            <p className="text-body-sm text-ink-muted">File access has been granted</p>
           </div>
         </div>
 
@@ -176,7 +176,7 @@ export function PurchaseFlow({
             </svg>
           </div>
           <div>
-            <h3 className="text-card-title text-ink">Pembayaran Gagal</h3>
+            <h3 className="text-card-title text-ink">Payment Failed</h3>
             <p className="text-body-sm text-ink-muted">{error}</p>
           </div>
         </div>
@@ -186,14 +186,14 @@ export function PurchaseFlow({
             onClick={handlePurchase}
             className="flex-1 px-lg py-md bg-accent text-white text-body hover:bg-accent-hover transition-colors"
           >
-            Coba Lagi
+            Try Again
           </button>
           {onCancel && (
             <button
               onClick={onCancel}
               className="px-lg py-md border border-hairline text-ink text-body hover:bg-surface-1 transition-colors"
             >
-              Batal
+              Cancel
             </button>
           )}
         </div>
@@ -208,20 +208,20 @@ export function PurchaseFlow({
           <Spinner size="md" />
           <div>
             <h3 className="text-card-title text-ink">
-              {state === 'initiating' && 'Menyiapkan pembayaran...'}
-              {state === 'signing' && 'Menunggu konfirmasi dari wallet...'}
-              {state === 'confirming' && 'Memproses pembayaran...'}
+              {state === 'initiating' && 'Preparing payment...'}
+              {state === 'signing' && 'Waiting for wallet confirmation...'}
+              {state === 'confirming' && 'Processing payment...'}
             </h3>
             <p className="text-body-sm text-ink-muted">
-              {state === 'signing' && 'Freighter popup terbuka di browser'}
-              {state === 'confirming' && 'Transaksi dikirim ke Stellar'}
+              {state === 'signing' && 'Freighter popup opened in browser'}
+              {state === 'confirming' && 'Transaction submitted to Stellar'}
             </p>
           </div>
         </div>
 
         {state === 'signing' && (
           <p className="text-body-sm text-ink-muted mb-lg">
-            Jika tidak muncul, klik extension Freighter di browser.
+            If it doesn't appear, click the Freighter extension in your browser.
           </p>
         )}
       </div>
@@ -231,16 +231,16 @@ export function PurchaseFlow({
   // Idle state
   return (
     <div className="bg-canvas border border-hairline p-xl">
-      <h3 className="text-card-title text-ink mb-sm">Beli Akses</h3>
+      <h3 className="text-card-title text-ink mb-sm">Purchase Access</h3>
       <p className="text-body text-ink-muted mb-lg">
-        Bayar {harga} XLM untuk mengakses "{judul}"
+        Pay {harga} XLM to access "{judul}"
       </p>
 
       <button
         onClick={handlePurchase}
         className="w-full px-lg py-md bg-accent text-white text-body font-medium hover:bg-accent-hover transition-colors"
       >
-        Beli Akses — {harga} XLM
+        Buy Access — {harga} XLM
       </button>
     </div>
   );

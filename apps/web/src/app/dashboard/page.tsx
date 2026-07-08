@@ -49,9 +49,9 @@ export default function DashboardPage() {
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center px-lg">
           <div className="bg-canvas border border-hairline p-xl max-w-md text-center">
-            <h1 className="text-headline text-ink mb-md">Hubungkan Wallet</h1>
+            <h1 className="text-headline text-ink mb-md">Connect Wallet</h1>
             <p className="text-body text-ink-muted mb-lg">
-              Hubungkan wallet Stellar Anda untuk mengakses dashboard penulis
+              Connect your Stellar wallet to access the writer dashboard
             </p>
             {isFreighterAvailable ? (
               <button
@@ -72,13 +72,13 @@ export default function DashboardPage() {
             )}
             <div className="relative my-md">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hairline"></div></div>
-              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">atau</span></div>
+              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">or</span></div>
             </div>
             <Link
               href="/login"
               className="block w-full border border-hairline text-ink text-button py-sm px-md rounded-none hover:bg-surface-1 transition-colors"
             >
-              Login dengan Email
+              Login with Email
             </Link>
             {authError && <p className="text-body-sm text-semantic-error mt-md">{authError}</p>}
           </div>
@@ -96,7 +96,7 @@ export default function DashboardPage() {
         <div className="mb-xl">
           <h1 className="text-display-md text-ink mb-sm">Dashboard</h1>
           <p className="text-body text-ink-muted">
-            Selamat datang kembali, {user?.nama || 'Penulis'} {walletAddress && <span className="font-mono text-caption text-ink-subtle ml-xs">({truncateAddress(walletAddress, 6)})</span>}
+            Welcome back, {user?.nama || 'Writer'} {walletAddress && <span className="font-mono text-caption text-ink-subtle ml-xs">({truncateAddress(walletAddress, 6)})</span>}
           </p>
         </div>
 
@@ -119,12 +119,12 @@ export default function DashboardPage() {
         <div className="bg-canvas border border-hairline mb-xl">
           <div className="px-lg py-md border-b border-hairline">
             <div className="flex items-center justify-between mb-md">
-              <h2 className="text-card-title text-ink">Karya Saya</h2>
+              <h2 className="text-card-title text-ink">My Works</h2>
               <Link
                 href="/upload"
                 className="bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors"
               >
-                + Upload Baru
+                + New Upload
               </Link>
             </div>
             {/* Status tabs */}
@@ -166,7 +166,7 @@ export default function DashboardPage() {
           <div className="bg-canvas border border-hairline">
             <div className="px-lg py-md border-b border-hairline">
               <div className="flex items-center justify-between">
-                <h2 className="text-card-title text-ink">Riwayat Transaksi</h2>
+                <h2 className="text-card-title text-ink">Transaction History</h2>
                 {txData && txData.transactions.length > 0 && (
                   <span className="text-body-sm text-ink-subtle">
                     {txData.summary.totalTransactions} total

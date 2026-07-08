@@ -22,7 +22,7 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
       setAccessUrl(result.accessUrl);
 
     } catch (err: any) {
-      setError(err.message || 'Gagal mendapatkan akses');
+      setError(err.message || 'Failed to get access');
     } finally {
       setAccessing(false);
     }
@@ -41,7 +41,7 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-            <span className="text-4xl">📖</span>
+            <span className="text-4xl text-gray-300">W</span>
           </div>
         )}
       </div>
@@ -63,7 +63,7 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
         <p className="text-sm text-gray-500 mb-3">{purchase.issuer_name}</p>
 
         <div className="text-sm text-gray-400 mb-3">
-          Dibeli: {new Date(purchase.purchased_at).toLocaleDateString('id-ID', {
+          Purchased: {new Date(purchase.purchased_at).toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
@@ -81,7 +81,7 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
             rel="noopener noreferrer"
             className="block w-full text-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
           >
-            ✓ File Terbuka
+            File Open
           </a>
         ) : (
           <button
@@ -89,7 +89,7 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
             disabled={accessing}
             className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors text-sm font-medium"
           >
-            {accessing ? 'Membuka...' : '📥 Download / Baca'}
+            {accessing ? 'Loading...' : 'Download / Read'}
           </button>
         )}
       </div>

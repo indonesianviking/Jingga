@@ -39,7 +39,7 @@ export default function EditorPage() {
 
   const handleSaveDraft = useCallback(async () => {
     if (!form.judul.trim()) {
-      setMessage({ type: 'error', text: 'Judul harus diisi' });
+      setMessage({ type: 'error', text: 'Title is required' });
       return;
     }
 
@@ -72,9 +72,9 @@ export default function EditorPage() {
         setSavedDraftId(result.id);
       }
 
-      setMessage({ type: 'success', text: 'Draft berhasil disimpan!' });
+      setMessage({ type: 'success', text: 'Draft saved successfully!' });
     } catch (err: unknown) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Gagal menyimpan draft' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save draft' });
     } finally {
       setSaving(false);
     }
@@ -82,11 +82,11 @@ export default function EditorPage() {
 
   const handlePublish = useCallback(async () => {
     if (!form.judul.trim()) {
-      setMessage({ type: 'error', text: 'Judul harus diisi' });
+      setMessage({ type: 'error', text: 'Title is required' });
       return;
     }
     if (!form.harga || parseFloat(form.harga) <= 0) {
-      setMessage({ type: 'error', text: 'Harga harus lebih dari 0 XLM' });
+      setMessage({ type: 'error', text: 'Price must be greater than 0 XLM' });
       return;
     }
 
@@ -123,14 +123,14 @@ export default function EditorPage() {
         });
       }
 
-      setMessage({ type: 'success', text: 'Karya berhasil dipublish ke Marketplace! 🎉' });
+      setMessage({ type: 'success', text: 'Work published to Marketplace successfully!' });
 
       // Redirect to dashboard after short delay
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
     } catch (err: unknown) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Gagal publish karya' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to publish work' });
     } finally {
       setPublishing(false);
     }
@@ -152,9 +152,9 @@ export default function EditorPage() {
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center px-lg">
           <div className="bg-canvas border border-hairline p-xl max-w-md text-center">
-            <h1 className="text-headline text-ink mb-md">Hubungkan Wallet</h1>
+            <h1 className="text-headline text-ink mb-md">Connect Wallet</h1>
             <p className="text-body text-ink-muted mb-lg">
-              Hubungkan wallet Stellar Anda untuk mulai menulis dan publish karya
+              Connect your Stellar wallet to start writing and publishing
             </p>
             {isFreighterAvailable ? (
               <button
@@ -175,13 +175,13 @@ export default function EditorPage() {
             )}
             <div className="relative my-md">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hairline"></div></div>
-              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">atau</span></div>
+              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">or</span></div>
             </div>
             <a
               href="/login"
               className="block w-full border border-hairline text-ink text-button py-sm px-md rounded-none hover:bg-surface-1 transition-colors"
             >
-              Login dengan Email
+              Login with Email
             </a>
             {authError && <p className="text-body-sm text-semantic-error mt-md">{authError}</p>}
           </div>
@@ -197,7 +197,7 @@ export default function EditorPage() {
         <div className="mb-xl">
           <h1 className="text-display-md text-ink mb-sm">Editor</h1>
           <p className="text-body text-ink-muted">
-            Tulis, edit, dan publish karya Anda langsung ke Marketplace
+            Write, edit, and publish your work directly to the Marketplace
             {walletAddress && (
               <span className="font-mono text-caption text-ink-subtle ml-xs">
                 ({truncateAddress(walletAddress, 6)})
@@ -223,7 +223,7 @@ export default function EditorPage() {
             <JinggaEditor
               initialContent={form.content}
               onChange={handleEditorChange}
-              placeholder="Mulai tulis karya Anda di sini... Support rich text, gambar, heading, dan lainnya."
+              placeholder="Start writing your work here... Supports rich text, images, headings, and more."
             />
           </div>
 
@@ -231,33 +231,33 @@ export default function EditorPage() {
           <div className="space-y-lg">
             {/* Karya Details */}
             <div className="bg-canvas border border-hairline p-lg">
-              <h3 className="text-card-title text-ink mb-md">Detail Karya</h3>
+              <h3 className="text-card-title text-ink mb-md">Work Details</h3>
 
               <div className="space-y-md">
                 <div>
-                  <label className="block text-body-sm text-ink-muted mb-xs">Judul *</label>
+                  <label className="block text-body-sm text-ink-muted mb-xs">Title *</label>
                   <input
                     type="text"
                     value={form.judul}
                     onChange={(e) => setForm({ ...form, judul: e.target.value })}
-                    placeholder="Judul karya Anda"
+                    placeholder="Enter your work title"
                     className="w-full px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-body-sm text-ink-muted mb-xs">Deskripsi</label>
+                  <label className="block text-body-sm text-ink-muted mb-xs">Description</label>
                   <textarea
                     value={form.deskripsi}
                     onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
-                    placeholder="Deskripsi singkat tentang karya Anda"
+                    placeholder="Brief description of your work"
                     rows={3}
                     className="w-full px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-body-sm text-ink-muted mb-xs">Kategori</label>
+                  <label className="block text-body-sm text-ink-muted mb-xs">Category</label>
                   <select
                     value={form.kategori}
                     onChange={(e) => setForm({ ...form, kategori: e.target.value })}
@@ -271,7 +271,7 @@ export default function EditorPage() {
                 </div>
 
                 <div>
-                  <label className="block text-body-sm text-ink-muted mb-xs">Harga (XLM) *</label>
+                  <label className="block text-body-sm text-ink-muted mb-xs">Price (XLM) *</label>
                   <input
                     type="number"
                     value={form.harga}
@@ -281,14 +281,14 @@ export default function EditorPage() {
                     step="0.1"
                     className="w-full px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary"
                   />
-                  <p className="text-caption text-ink-subtle mt-xs">Harga akses untuk pembaca</p>
+                  <p className="text-caption text-ink-subtle mt-xs">Reader access price</p>
                 </div>
               </div>
             </div>
 
             {/* Actions */}
             <div className="bg-canvas border border-hairline p-lg">
-              <h3 className="text-card-title text-ink mb-md">Aksi</h3>
+              <h3 className="text-card-title text-ink mb-md">Actions</h3>
 
               <div className="space-y-sm">
                 <button
@@ -296,7 +296,7 @@ export default function EditorPage() {
                   disabled={saving || publishing}
                   className="w-full bg-surface-1 text-ink text-button py-sm px-md rounded-none hover:bg-surface-2 transition-colors border border-hairline disabled:opacity-50"
                 >
-                  {saving ? 'Menyimpan...' : '💾 Simpan Draft'}
+                  {saving ? 'Saving...' : 'Save Draft'}
                 </button>
 
                 <button
@@ -304,25 +304,25 @@ export default function EditorPage() {
                   disabled={saving || publishing}
                   className="w-full bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors disabled:opacity-50"
                 >
-                  {publishing ? 'Publishing...' : '🚀 Publish ke Marketplace'}
+                  {publishing ? 'Publishing...' : 'Publish to Marketplace'}
                 </button>
               </div>
 
               <div className="mt-md pt-md border-t border-hairline">
                 <p className="text-caption text-ink-subtle">
-                  Publish akan membuat karya Anda tersedia di Marketplace dan siap dibeli oleh pembaca.
+                  Publishing will make your work available on the Marketplace for readers to purchase.
                 </p>
               </div>
             </div>
 
             {/* Tips */}
             <div className="bg-surface-1 border border-hairline p-lg">
-              <h3 className="text-card-title text-ink mb-sm">💡 Tips</h3>
+              <h3 className="text-card-title text-ink mb-sm">Tips</h3>
               <ul className="space-y-xs text-body-sm text-ink-muted">
-                <li>• Gunakan heading untuk struktur yang jelas</li>
-                <li>• Upload gambar untuk ilustrasi</li>
-                <li>• Simpan draft sebelum publish</li>
-                <li>• Harga dalam XLM (Stellar)</li>
+                <li>Use headings for clear structure</li>
+                <li>Upload images for illustrations</li>
+                <li>Save draft before publishing</li>
+                <li>Price in XLM (Stellar)</li>
               </ul>
             </div>
           </div>

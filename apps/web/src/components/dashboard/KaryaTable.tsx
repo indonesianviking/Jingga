@@ -34,7 +34,7 @@ export default function KaryaTable({ karya, loading, onRefetch }: KaryaTableProp
       await archiveKarya(id);
       onRefetch();
     } catch (err: any) {
-      alert(err.message || 'Gagal mengarsipkan karya');
+      alert(err.message || 'Failed to archive work');
     } finally {
       setArchiving(null);
       setShowConfirm(null);
@@ -54,14 +54,13 @@ export default function KaryaTable({ karya, loading, onRefetch }: KaryaTableProp
   if (karya.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-4xl mb-4">📝</div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada karya</h3>
-        <p className="text-gray-500 mb-4">Mulai upload karya pertama Anda sekarang!</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No works yet</h3>
+        <p className="text-gray-500 mb-4">Upload your first work now!</p>
         <Link
           href="/upload"
           className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
-          + Upload Karya Baru
+          + New Upload
         </Link>
       </div>
     );
@@ -72,11 +71,11 @@ export default function KaryaTable({ karya, loading, onRefetch }: KaryaTableProp
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
-            <th className="pb-3 font-medium">Karya</th>
+            <th className="pb-3 font-medium">Work</th>
             <th className="pb-3 font-medium">Status</th>
             <th className="pb-3 font-medium text-right">Sales</th>
             <th className="pb-3 font-medium text-right">Revenue</th>
-            <th className="pb-3 font-medium text-right">Aksi</th>
+            <th className="pb-3 font-medium text-right">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -117,7 +116,7 @@ export default function KaryaTable({ karya, loading, onRefetch }: KaryaTableProp
                     className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                     title="View"
                   >
-                    👁️
+                    View
                   </Link>
                   {item.status === 'draft' && (
                     <Link
@@ -125,27 +124,27 @@ export default function KaryaTable({ karya, loading, onRefetch }: KaryaTableProp
                       className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                       title="Edit"
                     >
-                      ✏️
+                      Edit
                     </Link>
                   )}
                   {item.status !== 'archived' && (
                     <div className="relative">
                       {showConfirm === item.id ? (
                         <div className="absolute right-0 top-0 z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[160px]">
-                          <p className="text-xs text-gray-600 mb-2">Arsipkan karya ini?</p>
+                          <p className="text-xs text-gray-600 mb-2">Archive this work?</p>
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleArchive(item.id)}
                               disabled={archiving === item.id}
                               className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
                             >
-                              {archiving === item.id ? '...' : 'Ya'}
+                              {archiving === item.id ? '...' : 'Yes'}
                             </button>
                             <button
                               onClick={() => setShowConfirm(null)}
                               className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
                             >
-                              Batal
+                              Cancel
                             </button>
                           </div>
                         </div>
@@ -155,7 +154,7 @@ export default function KaryaTable({ karya, loading, onRefetch }: KaryaTableProp
                           className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                           title="Archive"
                         >
-                          📦
+                          Archive
                         </button>
                       )}
                     </div>

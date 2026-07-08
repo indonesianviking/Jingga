@@ -21,8 +21,7 @@ export default function TransactionTable({ transactions, loading }: TransactionT
   if (transactions.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-3xl mb-3">💸</div>
-        <p className="text-gray-500">Belum ada transaksi</p>
+        <p className="text-gray-500">No transactions yet</p>
       </div>
     );
   }
@@ -32,10 +31,10 @@ export default function TransactionTable({ transactions, loading }: TransactionT
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
-            <th className="pb-3 font-medium">Karya</th>
-            <th className="pb-3 font-medium">Pembeli</th>
-            <th className="pb-3 font-medium text-right">Jumlah</th>
-            <th className="pb-3 font-medium">Tanggal</th>
+            <th className="pb-3 font-medium">Work</th>
+            <th className="pb-3 font-medium">Buyer</th>
+            <th className="pb-3 font-medium text-right">Amount</th>
+            <th className="pb-3 font-medium">Date</th>
             <th className="pb-3 font-medium text-center">Status</th>
             <th className="pb-3 font-medium text-right">TX</th>
           </tr>
@@ -58,7 +57,7 @@ export default function TransactionTable({ transactions, loading }: TransactionT
               </td>
               <td className="py-3">
                 <span className="text-sm text-gray-500">
-                  {new Date(tx.created_at).toLocaleDateString('id-ID', {
+                  {new Date(tx.created_at).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
