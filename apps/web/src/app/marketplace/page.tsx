@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Layout } from '@/components/layout/Layout';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { KaryaCard } from '@/components/marketplace/KaryaCard';
 import { SearchBar } from '@/components/marketplace/SearchBar';
@@ -14,7 +15,7 @@ export default function MarketplacePage() {
   const { data, loading, search, kategori, sort, page, updateParams } = useMarketplace();
 
   return (
-    <main className="min-h-screen bg-surface-1">
+    <Layout>
       <div className="mx-auto max-w-[1584px] py-xl px-lg">
         {/* Header */}
         <div className="mb-xl">
@@ -90,6 +91,6 @@ export default function MarketplacePage() {
           </>
         )}
       </div>
-    </main>
+    </Layout>
   );
 }

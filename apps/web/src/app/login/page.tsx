@@ -1,20 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const { loginWithEmail, isConnected } = useAuth();
+  const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (isConnected) {
-    window.location.href = '/dashboard';
-    return null;
-  }
+  useEffect(() => {
+    if (isConnected) {
+      router.push('/dashboard');
+    }
+  }, [isConnected, router]);
+
+  if (isConnected) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +28,9 @@ export default function LoginPage() {
 
     try {
       await loginWithEmail(form.email, form.password);
-      window.location.href = '/dashboard';
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+      router.push('/dashboard');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }

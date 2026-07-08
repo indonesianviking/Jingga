@@ -1,4 +1,4 @@
-const API_BASE = '/api/v1';
+import { API_BASE } from '@/lib/api';
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('jingga_auth_token');
@@ -72,13 +72,13 @@ export async function publishKarya(data: PublishData): Promise<PublishResult> {
   if (data.cover) formData.append('cover', data.cover);
 
   // Step 2: Create karya
-  const { karya } = await apiRequest<{ karya: any }>('/karya', {
+  const { karya } = await apiRequest<{ karya: any }>('/api/v1/karya', {
     method: 'POST',
     body: formData,
   });
 
   // Step 3: Publish karya (triggers minting)
-  const publishResult = await apiRequest<{ karya: any }>(`/karya/${karya.id}/publish`, {
+  const publishResult = await apiRequest<{ karya: any }>(`/api/v1/karya/${karya.id}/publish`, {
     method: 'POST',
     body: JSON.stringify({
       confirmOriginal: true,
@@ -94,7 +94,7 @@ export async function publishKarya(data: PublishData): Promise<PublishResult> {
 
   if (!txHash) {
     try {
-      const mintResult = await apiRequest<any>(`/karya/${karya.id}/mint`, {
+      const mintResult = await apiRequest<any>(`/api/v1/karya/${karya.id}/mint`, {
         method: 'POST',
       });
 
@@ -129,7 +129,7 @@ export async function mintExistingKarya(karyaId: string, signedXdr?: string): Pr
   txHash: string;
   explorerUrl: string;
 }> {
-  const result = await apiRequest<any>(`/karya/${karyaId}/mint`, {
+  const result = await apiRequest<any>(`/api/v1/karya/${karyaId}/mint`, {
     method: 'POST',
     body: JSON.stringify({ signedXdr }),
   });

@@ -1,22 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
 
 export default function RegisterPage() {
   const { registerWithEmail, isConnected } = useAuth();
+  const router = useRouter();
   const [form, setForm] = useState({ email: '', nama: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (isConnected) {
-    window.location.href = '/dashboard';
-    return null;
-  }
+  useEffect(() => {
+    if (isConnected) {
+      router.push('/dashboard');
+    }
+  }, [isConnected, router]);
+
+  if (isConnected) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,9 +34,9 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await registerWithEmail(form.email, form.nama, form.password);
-      window.location.href = '/dashboard';
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      router.push('/dashboard');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
     }

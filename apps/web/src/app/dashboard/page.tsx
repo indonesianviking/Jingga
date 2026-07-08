@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { ConnectWallet } from '@/components/auth/ConnectWallet';
+import { Layout } from '@/components/layout/Layout';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
 import KaryaTable from '@/components/dashboard/KaryaTable';
 import TransactionTable from '@/components/dashboard/TransactionTable';
@@ -18,7 +18,7 @@ import {
 const KARYA_STATUS_FILTERS = ['all', 'published', 'draft', 'archived'] as const;
 
 export default function DashboardPage() {
-  const { user, walletAddress, isConnected, isConnecting: authLoading } = useAuth();
+  const { user, walletAddress, isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, error: authError } = useAuth();
 
   // Dashboard overview
   const { data: overview, loading: overviewLoading, refetch: refetchOverview } = useDashboardOverview();
@@ -36,83 +36,112 @@ export default function DashboardPage() {
   // Auth gate
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-400">Loading...</div>
-      </div>
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-pulse text-ink-subtle">Loading...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (!isConnected) {
     return (
-      <main className="min-h-screen bg-surface-1">
-        <div className="mx-auto max-w-[1584px] py-xl px-lg">
-          <h1 className="text-display-md text-ink mb-lg">Dashboard</h1>
-          <div className="max-w-md mx-auto text-center py-section">
-            <p className="text-body-lg text-ink-muted mb-lg">
-              Connect your wallet to access your writer dashboard.
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center px-lg">
+          <div className="bg-canvas border border-hairline p-xl max-w-md text-center">
+            <h1 className="text-headline text-ink mb-md">Hubungkan Wallet</h1>
+            <p className="text-body text-ink-muted mb-lg">
+              Hubungkan wallet Stellar Anda untuk mengakses dashboard penulis
             </p>
-            <ConnectWallet />
+            {isFreighterAvailable ? (
+              <button
+                onClick={connectFreighter}
+                className="w-full bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors mb-md"
+              >
+                Connect Freighter Wallet
+              </button>
+            ) : (
+              <a
+                href="https://www.freighter.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-block bg-surface-1 text-ink text-button py-sm px-md rounded-none hover:bg-surface-2 transition-colors border border-hairline mb-md"
+              >
+                Install Freighter Extension
+              </a>
+            )}
+            <div className="relative my-md">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hairline"></div></div>
+              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">atau</span></div>
+            </div>
+            <Link
+              href="/login"
+              className="block w-full border border-hairline text-ink text-button py-sm px-md rounded-none hover:bg-surface-1 transition-colors"
+            >
+              Login dengan Email
+            </Link>
+            {authError && <p className="text-body-sm text-semantic-error mt-md">{authError}</p>}
           </div>
         </div>
-      </main>
+      </Layout>
     );
   }
 
   const stats = overview?.stats;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <Layout>
+      <div className="mx-auto max-w-[1584px] py-xl px-lg">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">
-            Selamat datang kembali, {user?.nama || 'Penulis'} {walletAddress && <span className="font-mono text-xs text-gray-400 ml-2">({truncateAddress(walletAddress, 6)})</span>}
+        <div className="mb-xl">
+          <h1 className="text-display-md text-ink mb-sm">Dashboard</h1>
+          <p className="text-body text-ink-muted">
+            Selamat datang kembali, {user?.nama || 'Penulis'} {walletAddress && <span className="font-mono text-caption text-ink-subtle ml-xs">({truncateAddress(walletAddress, 6)})</span>}
           </p>
         </div>
 
         {/* Stats Cards */}
         {stats && (
-          <div className="mb-8">
+          <div className="mb-xl">
             <DashboardStatsSection stats={stats} />
           </div>
         )}
 
         {overviewLoading && !stats && (
-          <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mb-xl grid grid-cols-2 md:grid-cols-4 gap-md">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />
+              <div key={i} className="h-28 bg-surface-1 border border-hairline animate-pulse" />
             ))}
           </div>
         )}
 
         {/* Karya Section */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-8">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Karya Saya</h2>
+        <div className="bg-canvas border border-hairline mb-xl">
+          <div className="px-lg py-md border-b border-hairline">
+            <div className="flex items-center justify-between mb-md">
+              <h2 className="text-card-title text-ink">Karya Saya</h2>
               <Link
                 href="/upload"
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+                className="bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors"
               >
-                <span>+</span> Upload Baru
+                + Upload Baru
               </Link>
             </div>
             {/* Status tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-xs">
               {KARYA_STATUS_FILTERS.map(status => (
                 <button
                   key={status}
                   onClick={() => setKaryaStatus(status)}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  className={`px-sm py-xs text-body-sm rounded-none transition-colors border ${
                     karyaStatus === status
-                      ? 'bg-primary-100 text-primary-700 font-medium'
-                      : 'text-gray-500 hover:bg-gray-100'
+                      ? 'bg-surface-1 text-ink border-hairline font-body-emphasis'
+                      : 'text-ink-muted border-transparent hover:bg-surface-1'
                   }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                   {status === 'all' && overview?.stats && (
-                    <span className="ml-1 text-xs text-gray-400">
+                    <span className="ml-xs text-caption text-ink-subtle">
                       ({overview.stats.totalKarya})
                     </span>
                   )}
@@ -120,7 +149,7 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-lg">
             <KaryaTable
               karya={karyaData?.karya || []}
               loading={karyaLoading}
@@ -132,20 +161,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-xl">
           {/* Recent Transactions */}
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-100">
+          <div className="bg-canvas border border-hairline">
+            <div className="px-lg py-md border-b border-hairline">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Riwayat Transaksi</h2>
+                <h2 className="text-card-title text-ink">Riwayat Transaksi</h2>
                 {txData && txData.transactions.length > 0 && (
-                  <span className="text-sm text-gray-400">
+                  <span className="text-body-sm text-ink-subtle">
                     {txData.summary.totalTransactions} total
                   </span>
                 )}
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-lg">
               <TransactionTable
                 transactions={txData?.transactions || overview?.recentTransactions || []}
                 loading={txLoading && overviewLoading}
@@ -154,11 +183,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Revenue Breakdown */}
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Revenue Breakdown</h2>
+          <div className="bg-canvas border border-hairline">
+            <div className="px-lg py-md border-b border-hairline">
+              <h2 className="text-card-title text-ink">Revenue Breakdown</h2>
             </div>
-            <div className="p-6">
+            <div className="p-lg">
               <RevenueChart
                 revenue={revenueData?.revenue || []}
                 totalRevenue={revenueData?.totalRevenue || 0}
@@ -168,6 +197,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

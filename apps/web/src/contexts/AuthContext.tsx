@@ -4,9 +4,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   isFreighterInstalled,
   getPublicKey,
+  signMessage,
   requestAccess,
   truncateAddress,
 } from '@/lib/freighter';
+import { API_BASE } from '@/lib/api';
 
 interface User {
   id: string;
@@ -45,8 +47,6 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 const TOKEN_KEY = 'jingga_auth_token';
 const WALLET_KEY = 'jingga_wallet_address';
 const AUTH_METHOD_KEY = 'jingga_auth_method';
@@ -61,9 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authMethod, setAuthMethod] = useState<'freighter' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Check Freighter on mount
+  // Check Freighter on mount + periodically (extension may load after page)
   useEffect(() => {
     isFreighterInstalled().then(setIsFreighterAvailable);
+    const interval = setInterval(() => {
+      isFreighterInstalled().then(setIsFreighterAvailable);
+    }, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   // Restore session from localStorage
@@ -111,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await requestAccess();
       const publicKey = await getPublicKey();
 
+      // Get challenge from backend
       const challengeRes = await fetch(`${API_BASE}/api/v1/auth/challenge`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,12 +125,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!challengeRes.ok) throw new Error('Failed to get authentication challenge');
 
       const { challenge, nonce } = await challengeRes.json();
-      const signedMessage = challenge;
 
+      // Try to sign the challenge with Freighter wallet
+      // signMessage returns null if not available (graceful fallback)
+      const signedMessage = await signMessage(challenge);
+
+      // Build verify payload — include signedMessage only if available
+      const verifyPayload: Record<string, string> = { publicKey, nonce };
+      if (signedMessage) {
+        verifyPayload.signedMessage = signedMessage;
+      }
+
+      // Verify with backend
       const verifyRes = await fetch(`${API_BASE}/api/v1/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicKey, signedMessage, nonce }),
+        body: JSON.stringify(verifyPayload),
       });
 
       if (!verifyRes.ok) {

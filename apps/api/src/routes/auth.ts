@@ -36,8 +36,8 @@ router.post('/verify', async (req: Request, res: Response) => {
   try {
     const { publicKey, signedMessage, nonce } = req.body;
 
-    if (!publicKey || !signedMessage || !nonce) {
-      res.status(400).json({ error: 'publicKey, signedMessage, and nonce are required' });
+    if (!publicKey || !nonce) {
+      res.status(400).json({ error: 'publicKey and nonce are required' });
       return;
     }
 
@@ -54,11 +54,19 @@ router.post('/verify', async (req: Request, res: Response) => {
       return;
     }    // Verify signature against the stored challenge
       // The stored challenge was created at a specific timestamp
-      const expectedChallenge = nonceEntry.challenge;
-      if (signedMessage !== expectedChallenge) {
-        // For demo mode: accept if nonce is valid
-        // In production, verify cryptographic signature here
-        console.warn('[Auth] Signature mismatch, proceeding in demo mode');
+      // Verify signature if provided
+      if (signedMessage) {
+        const expectedChallenge = nonceEntry.challenge;
+        if (signedMessage !== expectedChallenge) {
+          console.warn('[Auth] Signature mismatch — signedMessage did not match challenge');
+          // In production: reject or verify cryptographic signature
+        } else {
+          console.log('[Auth] Signature verified (challenge match)');
+        }
+      } else {
+        // No signature provided — client's Freighter version doesn't support signMessage
+        // Accept auth if nonce is valid (simplified flow)
+        console.log('[Auth] No signature provided — simplified auth flow (signMessage unavailable)');
       }
 
     // Upsert user in database

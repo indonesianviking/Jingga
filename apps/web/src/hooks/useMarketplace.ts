@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { API_BASE } from '@/lib/api';
 
 export type SortOption = 'newest' | 'popular' | 'price_asc' | 'price_desc';
 
@@ -50,7 +51,7 @@ export function useMarketplace() {
     if (sort) params.set('sort', sort);
     params.set('page', String(page));
 
-    fetch(`/api/v1/marketplace?${params.toString()}`)
+    fetch(`${API_BASE}/api/v1/marketplace?${params.toString()}`)
       .then((res) => res.json())
       .then(setData)
       .catch(() => setData({ karya: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } }))

@@ -1,97 +1,218 @@
-import { STELLAR_NETWORK_PASSPHRASE } from '@jingga/shared';
+/**
+ * Freighter wallet integration using @stellar/freighter-api v6.0.1
+ *
+ * IMPORTANT: In v6, the function is getAddress() — NOT getPublicKey().
+ * The package handles all window injection detection internally.
+ */
 
-let freighterApi: any = null;
+let freighterModule: any = null;
 
-// Dynamically import Freighter (browser-only)
-async function getFreighter() {
-  if (!freighterApi) {
+async function getFreighterApi(): Promise<any> {
+  if (freighterModule) return freighterModule;
+  try {
+    const mod = await import('@stellar/freighter-api');
+    freighterModule = mod.default || mod;
+    return freighterModule;
+  } catch (err) {
+    console.error('[Freighter] Failed to import @stellar/freighter-api:', err);
+    return null;
+  }
+}
+
+/**
+ * Check if Freighter extension is installed in the browser.
+ * This checks if the extension has injected its API into window.
+ * It does NOT check if the user has authorized the dApp — use isConnected() for that.
+ */
+export async function isFreighterInstalled(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  // 1. Direct window check — fastest, synchronous, no API call needed
+  // The Freighter extension injects window.freighterApi (modern) or window.freighter (legacy)
+  if ((window as any).freighterApi) {
+    console.log('[Freighter] Detected window.freighterApi ✓');
+    return true;
+  }
+  if ((window as any).freighter) {
+    console.log('[Freighter] Detected window.freighter (legacy) ✓');
+    return true;
+  }
+
+  // 2. Try the npm package as fallback
+  const api = await getFreighterApi();
+  if (api && typeof api.isConnected === 'function') {
     try {
-      const mod = await import('@stellar/freighter-api');
-      freighterApi = mod.default || mod;
+      const result = await api.isConnected();
+      if (result === true) {
+        console.log('[Freighter] Detected via isConnected() ✓');
+        return true;
+      }
     } catch {
+      // isConnected might throw if not installed
+    }
+  }
+
+  console.log('[Freighter] Not detected');
+  return false;
+}
+
+/**
+ * Wait for Freighter extension to inject its API into window.
+ * The extension injects asynchronously after page load.
+ * Polls every 500ms for up to maxWait ms.
+ */
+export async function waitForFreighter(maxWait = 5000): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  // Already detected?
+  if ((window as any).freighterApi || (window as any).freighter) {
+    return true;
+  }
+
+  const startTime = Date.now();
+  return new Promise((resolve) => {
+    const check = () => {
+      if ((window as any).freighterApi || (window as any).freighter) {
+        console.log('[Freighter] Extension detected after wait ✓');
+        resolve(true);
+        return;
+      }
+      if (Date.now() - startTime >= maxWait) {
+        console.log('[Freighter] Timed out waiting for extension');
+        resolve(false);
+        return;
+      }
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
+/**
+ * Get the user's Stellar address (public key).
+ * v6 uses getAddress() — NOT getPublicKey().
+ */
+export async function getPublicKey(): Promise<string> {
+  // Wait for extension injection first
+  await waitForFreighter(3000);
+
+  const api = await getFreighterApi();
+  if (!api) throw new Error('Freighter is not installed. Please install the Freighter browser extension.');
+
+  // v6: getAddress() returns { address: string } or just the address string
+  if (typeof api.getAddress === 'function') {
+    const result = await api.getAddress();
+
+    // Handle both return formats:
+    // - { address: "G..." } (object with address property)
+    // - "G..." (plain string)
+    if (typeof result === 'string') {
+      return result;
+    }
+    if (result && typeof result === 'object' && result.address) {
+      return result.address;
+    }
+  }
+
+  throw new Error('Freighter is not installed or getAddress is not available');
+}
+
+/**
+ * Sign a message with Freighter wallet.
+ * Returns the signature string, or null if signMessage is not available.
+ */
+export async function signMessage(message: string): Promise<string | null> {
+  const api = await getFreighterApi();
+  if (!api) return null;
+
+  if (typeof api.signMessage === 'function') {
+    try {
+      const result = await api.signMessage(message);
+      return typeof result === 'string' ? result : result?.signature || null;
+    } catch (err) {
+      console.warn('[Freighter] signMessage failed:', err);
       return null;
     }
   }
-  return freighterApi;
+
+  console.warn('[Freighter] signMessage not available in this extension version');
+  return null;
 }
 
-export async function isFreighterInstalled(): Promise<boolean> {
-  // Check if window.freighter exists (extension injected)
-  if (typeof window !== 'undefined' && (window as any).freighter) {
-    return true;
-  }
-  // Fallback: try the API module
-  const freighter = await getFreighter();
-  if (!freighter) return false;
-  try {
-    if (typeof freighter.isConnected === 'function') {
-      return await freighter.isConnected();
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-export async function getPublicKey(): Promise<string> {
-  const freighter = await getFreighter();
-  if (!freighter) throw new Error('Freighter is not installed');
-
-  // v2 API uses getPublicKey()
-  if (typeof freighter.getPublicKey === 'function') {
-    return await freighter.getPublicKey();
-  }
-
-  // Fallback: check window.freighter directly
-  if (typeof (window as any).freighter?.getPublicKey === 'function') {
-    return await (window as any).freighter.getPublicKey();
-  }
-
-  throw new Error('Freighter is not installed or getPublicKey is not available');
-}
-
+/**
+ * Sign a transaction XDR with Freighter wallet.
+ */
 export async function signTransaction(xdr: string, network?: string): Promise<string> {
-  const freighter = await getFreighter();
-  if (!freighter) throw new Error('Freighter is not installed');
+  const api = await getFreighterApi();
+  if (!api) throw new Error('Freighter is not installed');
 
-  const networkPassphrase = network || STELLAR_NETWORK_PASSPHRASE;
-
-  // v2 API uses signTransaction(xdr, { network })
-  if (typeof freighter.signTransaction === 'function') {
-    return await freighter.signTransaction(xdr, { network: networkPassphrase });
-  }
-
-  // Fallback: try signTx
-  if (typeof freighter.signTx === 'function') {
-    const result = await freighter.signTx(xdr, networkPassphrase);
-    return typeof result === 'string' ? result : result.signedTx || result;
+  if (typeof api.signTransaction === 'function') {
+    return await api.signTransaction(xdr, network);
   }
 
   throw new Error('Freighter signTransaction is not available');
 }
 
+/**
+ * Sign an auth entry with Freighter wallet.
+ */
 export async function signAuthEntry(entryXdr: string): Promise<string> {
-  const freighter = await getFreighter();
-  if (!freighter) throw new Error('Freighter is not installed');
+  const api = await getFreighterApi();
+  if (!api) throw new Error('Freighter is not installed');
 
-  if (typeof freighter.signAuthEntry === 'function') {
-    return await freighter.signAuthEntry(entryXdr);
+  if (typeof api.signAuthEntry === 'function') {
+    return await api.signAuthEntry(entryXdr);
   }
 
   throw new Error('Freighter signAuthEntry is not available');
 }
 
+/**
+ * Request access to the user's wallet.
+ */
 export async function requestAccess(): Promise<boolean> {
-  const freighter = await getFreighter();
-  if (!freighter) return false;
+  const api = await getFreighterApi();
+  if (!api) return false;
 
-  if (typeof freighter.requestAccess === 'function') {
-    return await freighter.requestAccess();
+  if (typeof api.requestAccess === 'function') {
+    return await api.requestAccess();
   }
 
   return false;
 }
 
+/**
+ * Get the current network passphrase from Freighter.
+ */
+export async function getNetwork(): Promise<string> {
+  const api = await getFreighterApi();
+  if (!api) return '';
+
+  if (typeof api.getNetwork === 'function') {
+    const result = await api.getNetwork();
+    return typeof result === 'string' ? result : result?.networkPassphrase || '';
+  }
+
+  return '';
+}
+
+/**
+ * Check if the dApp is allowed to access Freighter.
+ */
+export async function isAllowed(): Promise<boolean> {
+  const api = await getFreighterApi();
+  if (!api) return false;
+
+  if (typeof api.isAllowed === 'function') {
+    return await api.isAllowed();
+  }
+
+  return false;
+}
+
+/**
+ * Truncate a Stellar address for display.
+ */
 export function truncateAddress(address: string, chars = 4): string {
   if (!address) return '';
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;

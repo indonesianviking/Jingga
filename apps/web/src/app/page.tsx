@@ -1,37 +1,10 @@
+'use client';
+
+import { Layout } from '@/components/layout/Layout';
+
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      {/* Utility Bar */}
-      <div className="bg-surface-1 py-xxs px-lg text-caption text-ink-muted">
-        <div className="mx-auto max-w-[1584px] flex items-center justify-between">
-          <span>Jingga — Stellar Testnet</span>
-          <span>Publication & Royalty Platform</span>
-        </div>
-      </div>
-
-      {/* Top Navigation */}
-      <nav className="border-b border-hairline bg-canvas py-sm px-lg sticky top-0 z-50">
-        <div className="mx-auto max-w-[1584px] flex items-center justify-between">
-          <a href="/" className="text-headline font-semibold text-ink tracking-tight">
-            Jingga
-          </a>
-          <div className="flex items-center gap-xl text-body-sm">
-            <a href="/marketplace" className="text-ink-muted hover:text-primary transition-colors">
-              Marketplace
-            </a>
-            <a href="/dashboard" className="text-ink-muted hover:text-primary transition-colors">
-              Dashboard
-            </a>
-            <a href="/upload" className="text-ink-muted hover:text-primary transition-colors">
-              Upload
-            </a>
-          </div>
-          <button className="bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors">
-            Connect Wallet
-          </button>
-        </div>
-      </nav>
-
+    <Layout>
       {/* Hero Section */}
       <section className="bg-canvas py-section px-lg">
         <div className="mx-auto max-w-[1584px]">
@@ -95,38 +68,65 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-inverse-canvas py-xxl px-lg text-inverse-ink-muted">
+      {/* How It Works */}
+      <section className="bg-canvas py-section px-lg">
         <div className="mx-auto max-w-[1584px]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-xl mb-xl">
-            <div>
-              <h3 className="text-body-emphasis text-inverse-ink mb-md">Platform</h3>
-              <ul className="space-y-sm text-body-sm">
-                <li><a href="/marketplace" className="hover:text-inverse-ink transition-colors">Marketplace</a></li>
-                <li><a href="/upload" className="hover:text-inverse-ink transition-colors">Upload Work</a></li>
-                <li><a href="/dashboard" className="hover:text-inverse-ink transition-colors">Dashboard</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-body-emphasis text-inverse-ink mb-md">Developers</h3>
-              <ul className="space-y-sm text-body-sm">
-                <li><a href="https://developers.stellar.org" className="hover:text-inverse-ink transition-colors" target="_blank" rel="noopener noreferrer">Stellar Docs</a></li>
-                <li><a href="https://soroban.stellar.org" className="hover:text-inverse-ink transition-colors" target="_blank" rel="noopener noreferrer">Soroban Docs</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-body-emphasis text-inverse-ink mb-md">About</h3>
-              <ul className="space-y-sm text-body-sm">
-                <li>APAC Stellar Hackathon 2026</li>
-                <li>Local Finance & Real-World Access (RWA)</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-inverse-surface-1 pt-lg text-caption">
-            © 2026 Jingga. Built on Stellar.
+          <h2 className="text-headline text-ink mb-xl">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+            {[
+              {
+                step: '01',
+                title: 'Connect Your Wallet',
+                desc: 'Sign in with your Stellar wallet using Freighter extension, or create an account with email.',
+              },
+              {
+                step: '02',
+                title: 'Publish Your Work',
+                desc: 'Upload your manuscript, set a price, and mint it as a Stellar asset for proof of authorship.',
+              },
+              {
+                step: '03',
+                title: 'Get Paid Instantly',
+                desc: 'Readers pay directly to your wallet. Track royalties and revenue in your dashboard.',
+              },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="w-12 h-12 bg-primary text-on-primary text-headline flex items-center justify-center mx-auto mb-md rounded-none">
+                  {item.step}
+                </div>
+                <h3 className="text-card-title text-ink mb-sm">{item.title}</h3>
+                <p className="text-body text-ink-muted">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </footer>
-    </main>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-primary py-section px-lg">
+        <div className="mx-auto max-w-[1584px] text-center">
+          <h2 className="text-headline text-on-primary mb-md">
+            Ready to start publishing?
+          </h2>
+          <p className="text-body-lg text-on-primary opacity-80 mb-lg max-w-2xl mx-auto">
+            Join independent writers across Southeast Asia. Set your own price, keep 100% of your revenue.
+          </p>
+          <div className="flex gap-md justify-center">
+            <a
+              href="/upload"
+              className="bg-on-primary text-primary text-button py-sm px-lg rounded-none hover:opacity-90 transition-colors font-semibold"
+            >
+              Start Publishing
+            </a>
+            <a
+              href="/marketplace"
+              className="border border-on-primary text-on-primary text-button py-sm px-lg rounded-none hover:bg-on-primary hover:text-primary transition-colors"
+            >
+              Explore Works
+            </a>
+          </div>
+        </div>
+      </section>
+    </Layout>
   );
 }

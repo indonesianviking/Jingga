@@ -1,28 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('jingga_auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(err.error || 'Request failed');
-  }
-  return res.json();
-}
+import { apiRequest } from '../lib/api';
 
 // Dashboard overview
 export interface DashboardStats {
@@ -145,8 +122,8 @@ export function useDashboardOverview() {
       setError(null);
       const result = await apiRequest<DashboardOverview>('/api/v1/dashboard');
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -177,8 +154,8 @@ export function useDashboardKarya(status?: string, page: number = 1) {
         `/api/v1/dashboard/karya${query ? `?${query}` : ''}`
       );
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load karya');
     } finally {
       setLoading(false);
     }
@@ -209,8 +186,8 @@ export function useDashboardTransactions(karyaId?: string, page: number = 1) {
         `/api/v1/dashboard/transactions${query ? `?${query}` : ''}`
       );
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load transactions');
     } finally {
       setLoading(false);
     }
@@ -235,8 +212,8 @@ export function useDashboardRevenue() {
       setError(null);
       const result = await apiRequest<RevenueBreakdownResponse>('/api/v1/dashboard/revenue');
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load revenue');
     } finally {
       setLoading(false);
     }
@@ -251,17 +228,9 @@ export function useDashboardRevenue() {
 
 // Archive karya
 export async function archiveKarya(karyaId: string): Promise<boolean> {
-  const res = await fetch(`${API_BASE}/api/v1/dashboard/archive/${karyaId}`, {
+  await apiRequest(`/api/v1/dashboard/archive/${karyaId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-    },
     body: JSON.stringify({ confirm: true }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Failed to archive' }));
-    throw new Error(err.error);
-  }
   return true;
 }

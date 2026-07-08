@@ -1,28 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('jingga_auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(err.error || 'Request failed');
-  }
-  return res.json();
-}
+import { apiRequest } from '../lib/api';
 
 // Reader dashboard overview
 export interface ReaderStats {
@@ -102,8 +79,8 @@ export function useReaderDashboard() {
       setError(null);
       const result = await apiRequest<ReaderDashboard>('/api/v1/reader/dashboard');
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -134,8 +111,8 @@ export function usePurchaseList(kategori?: string, page: number = 1) {
         `/api/v1/reader/purchases${query ? `?${query}` : ''}`
       );
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load purchases');
     } finally {
       setLoading(false);
     }

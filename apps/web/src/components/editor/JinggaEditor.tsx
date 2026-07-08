@@ -1,0 +1,334 @@
+'use client';
+
+import React, { useCallback, useRef } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import CodeBlock from '@tiptap/extension-code-block';
+import { API_BASE } from '@/lib/api';
+import { getAuthToken } from '@/lib/api';
+
+interface JinggaEditorProps {
+  initialContent?: string;
+  onChange?: (html: string, json: unknown) => void;
+  editable?: boolean;
+  placeholder?: string;
+}
+
+function ToolbarButton({
+  onClick,
+  active,
+  disabled,
+  children,
+  title,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`p-xs rounded-none transition-colors ${
+        active
+          ? 'bg-surface-2 text-ink font-medium'
+          : 'text-ink-muted hover:bg-surface-1 hover:text-ink'
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ToolbarDivider() {
+  return <div className="w-px h-md bg-hairline mx-xs" />;
+}
+
+export default function JinggaEditor({
+  initialContent = '',
+  onChange,
+  editable = true,
+  placeholder = 'Start writing your masterpiece...',
+}: JinggaEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: 'text-primary underline' },
+      }),
+      Placeholder.configure({
+        placeholder,
+      }),
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      CodeBlock,
+    ],
+    content: initialContent,
+    editable,
+    onUpdate: ({ editor: e }) => {
+      onChange?.(e.getHTML(), e.getJSON());
+    },
+  });
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!editor) return;
+
+    // For small images, use base64 inline
+    if (file.size < 500 * 1024) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.chain().focus().setImage({ src: reader.result as string }).run();
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For larger images, upload to server
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/api/v1/upload/image`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      });
+      if (res.ok) {
+        const { url } = await res.json();
+        editor.chain().focus().setImage({ src: url }).run();
+      } else {
+        // Fallback to base64
+        const reader = new FileReader();
+        reader.onload = () => {
+          editor.chain().focus().setImage({ src: reader.result as string }).run();
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
+      // Fallback to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.chain().focus().setImage({ src: reader.result as string }).run();
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [editor]);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageUpload(file);
+    }
+    e.target.value = '';
+  }, [handleImageUpload]);
+
+  const addLink = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt('Enter URL:');
+    if (url) {
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+  }, [editor]);
+
+  if (!editor) return null;
+
+  return (
+    <div className="border border-hairline bg-canvas">
+      {/* Toolbar */}
+      {editable && (
+        <div className="flex flex-wrap items-center gap-xxs px-sm py-xs border-b border-hairline bg-surface-1">
+          {/* Text formatting */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            active={editor.isActive('bold')}
+            title="Bold"
+          >
+            <strong>B</strong>
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            active={editor.isActive('italic')}
+            title="Italic"
+          >
+            <em>I</em>
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            active={editor.isActive('underline')}
+            title="Underline"
+          >
+            <span className="underline">U</span>
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            active={editor.isActive('code')}
+            title="Inline Code"
+          >
+            {'<>'}
+          </ToolbarButton>
+
+          <ToolbarDivider />
+
+          {/* Headings */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            active={editor.isActive('heading', { level: 1 })}
+            title="Heading 1"
+          >
+            H1
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            active={editor.isActive('heading', { level: 2 })}
+            title="Heading 2"
+          >
+            H2
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            active={editor.isActive('heading', { level: 3 })}
+            title="Heading 3"
+          >
+            H3
+          </ToolbarButton>
+
+          <ToolbarDivider />
+
+          {/* Lists */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            active={editor.isActive('bulletList')}
+            title="Bullet List"
+          >
+            •≡
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            active={editor.isActive('orderedList')}
+            title="Numbered List"
+          >
+            1.
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            active={editor.isActive('blockquote')}
+            title="Quote"
+          >
+            &ldquo;
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            active={editor.isActive('codeBlock')}
+            title="Code Block"
+          >
+            {'{ }'}
+          </ToolbarButton>
+
+          <ToolbarDivider />
+
+          {/* Alignment */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            active={editor.isActive({ textAlign: 'left' })}
+            title="Align Left"
+          >
+            ≡←
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            active={editor.isActive({ textAlign: 'center' })}
+            title="Align Center"
+          >
+            ≡↔
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            active={editor.isActive({ textAlign: 'right' })}
+            title="Align Right"
+          >
+            ≡→
+          </ToolbarButton>
+
+          <ToolbarDivider />
+
+          {/* Link */}
+          <ToolbarButton
+            onClick={addLink}
+            active={editor.isActive('link')}
+            title="Add Link"
+          >
+            🔗
+          </ToolbarButton>
+
+          {/* Image */}
+          <ToolbarButton
+            onClick={() => fileInputRef.current?.click()}
+            title="Insert Image"
+          >
+            🖼️
+          </ToolbarButton>
+
+          {/* Horizontal rule */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            title="Horizontal Rule"
+          >
+            ―
+          </ToolbarButton>
+
+          {/* Undo/Redo */}
+          <ToolbarDivider />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().undo().run()}
+            disabled={!editor.can().undo()}
+            title="Undo"
+          >
+            ↩
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().redo().run()}
+            disabled={!editor.can().redo()}
+            title="Redo"
+          >
+            ↪
+          </ToolbarButton>
+        </div>
+      )}
+
+      {/* Hidden file input for image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Editor Content */}
+      <EditorContent
+        editor={editor}
+        className="prose prose-lg max-w-none p-lg min-h-[500px] focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[400px] [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-ink-subtle [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none"
+      />
+    </div>
+  );
+}
