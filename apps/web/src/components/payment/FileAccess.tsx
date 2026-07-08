@@ -20,11 +20,13 @@ export function FileAccess({ karyaId }: FileAccessProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        const token = localStorage.getItem('jingga_token');
-        const res = await fetch(`/api/v1/payments/check/${karyaId}`, {
+        const token = localStorage.getItem('jingga_auth_token');
+        const res = await fetch(`${API_BASE}/api/v1/payments/check/${karyaId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 

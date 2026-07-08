@@ -40,7 +40,8 @@ export function ClaimPayment({
     explorerUrl: string;
   } | null>(null);
 
-  const getToken = () => localStorage.getItem('jingga_token');
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const getToken = () => localStorage.getItem('jingga_auth_token');
 
   const getNetworkPassphrase = () => {
     return process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'public'
@@ -78,7 +79,7 @@ export function ClaimPayment({
 
     try {
       // Step 1: Initiate claimable balance creation
-      const { xdr } = await apiRequest('/api/v1/payments/claimable/initiate', {
+      const { xdr } = await apiRequest(`${API_BASE}/api/v1/payments/claimable/initiate`, {
         method: 'POST',
         body: JSON.stringify({ karya_id: karyaId }),
       });
@@ -89,7 +90,7 @@ export function ClaimPayment({
 
       // Step 3: Submit claimable balance
       setState('submitting_create');
-      const { balanceId, txHash: createTxHash, explorerUrl: createExplorerUrl } = await apiRequest('/api/v1/payments/claimable/create', {
+      const { balanceId, txHash: createTxHash, explorerUrl: createExplorerUrl } = await apiRequest(`${API_BASE}/api/v1/payments/claimable/create`, {
         method: 'POST',
         body: JSON.stringify({
           signed_xdr: signedXdr,
@@ -99,7 +100,7 @@ export function ClaimPayment({
 
       // Step 4: Initiate claim
       setState('initiating_claim');
-      const claimData = await apiRequest('/api/v1/payments/claimable/initiate-claim', {
+      const claimData = await apiRequest(`${API_BASE}/api/v1/payments/claimable/initiate-claim`, {
         method: 'POST',
         body: JSON.stringify({ balance_id: balanceId }),
       });
@@ -110,7 +111,7 @@ export function ClaimPayment({
 
       // Step 6: Submit claim
       setState('submitting_claim');
-      const claimResult = await apiRequest('/api/v1/payments/claimable/claim', {
+      const claimResult = await apiRequest(`${API_BASE}/api/v1/payments/claimable/claim`, {
         method: 'POST',
         body: JSON.stringify({
           balance_id: balanceId,

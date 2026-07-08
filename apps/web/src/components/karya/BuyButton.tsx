@@ -22,11 +22,13 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
   const [checking, setChecking] = useState(true);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
   useEffect(() => {
     const checkPurchase = async () => {
       try {
-        const token = localStorage.getItem('jingga_token');
-        const res = await fetch(`/api/v1/payments/check/${karyaId}`, {
+        const token = localStorage.getItem('jingga_auth_token');
+        const res = await fetch(`${API_BASE}/api/v1/payments/check/${karyaId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 

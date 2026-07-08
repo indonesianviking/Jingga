@@ -37,7 +37,8 @@ export function PurchaseFlow({
     explorerUrl: string;
   } | null>(null);
 
-  const getToken = () => localStorage.getItem('jingga_token');
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const getToken = () => localStorage.getItem('jingga_auth_token');
 
   const handlePurchase = async () => {
     setState('initiating');
@@ -46,7 +47,7 @@ export function PurchaseFlow({
     try {
       // 1. Initiate payment - get XDR
       const token = getToken();
-      const initiateRes = await fetch('/api/v1/payments/initiate', {
+      const initiateRes = await fetch(`${API_BASE}/api/v1/payments/initiate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ export function PurchaseFlow({
       // 3. Confirm payment
       setState('confirming');
 
-      const confirmRes = await fetch('/api/v1/payments/confirm', {
+      const confirmRes = await fetch(`${API_BASE}/api/v1/payments/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
