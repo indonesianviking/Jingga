@@ -3,6 +3,7 @@ import { requireAuth, AuthRequest } from '../middleware/auth';
 import {
   initiatePayment,
   confirmPayment,
+  verifyStellarPayment,
   hasPurchased,
   getPurchaseHistory,
   PaymentError,
@@ -167,6 +168,49 @@ router.get('/check/:karyaId', requireAuth, async (req: AuthRequest, res: Respons
   } catch (error) {
     console.error('[Payments] Check error:', error);
     res.status(500).json({ error: 'Failed to check purchase status' });
+  }
+});
+
+// POST /api/v1/payments/verify — Verify a Stellar transaction retroactively
+// Use this if the normal /confirm flow failed but the Stellar tx went through.
+router.post('/verify', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { tx_hash, karya_id } = req.body;
+    if (!tx_hash || !karya_id) {
+      res.status(400).json({ error: 'tx_hash and karya_id are required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await verifyStellarPayment(tx_hash, user.wallet_address, karya_id);
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Verify error:', error);
+    if (error instanceof PaymentError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to verify payment' });
   }
 });
 

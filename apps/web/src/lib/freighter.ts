@@ -162,19 +162,50 @@ export async function signMessage(message: string): Promise<string | null> {
 
 /**
  * Normalize the result from Freighter's signTransaction.
- * Freighter v6+ returns { signedTxXdr: string } while older versions return a plain string.
+ * Freighter v6+ returns { signedTxXdr: string, signerAddress: string } while
+ * older versions return a plain string.
+ * Also handles error case: { signedTxXdr: '', signerAddress: '', error: {...} }
  */
 function normalizeSignedXdr(result: unknown): string {
+  // Case 1: plain string (legacy format)
   if (typeof result === 'string') return result;
+
   if (result && typeof result === 'object') {
-    // Freighter v6+ format: { signedTxXdr: "AAAA..." }
     const obj = result as Record<string, unknown>;
-    if (typeof obj.signedTxXdr === 'string') return obj.signedTxXdr;
-    if (typeof obj.signedXdr === 'string') return obj.signedXdr;
-    // Some older v6 builds return { tx: { toEnvelope()... } } or similar — grab first string value
-    const strValue = Object.values(obj).find((v): v is string => typeof v === 'string');
+
+    // Extract error first (Freighter v6 returns error object on failure)
+    const err = obj.error;
+    if (err) {
+      const errMsg =
+        typeof err === 'object' && err !== null
+          ? (err as Record<string, unknown>).message || JSON.stringify(err)
+          : String(err);
+      throw new Error(`Freighter signing rejected: ${errMsg}`);
+    }
+
+    // Freighter v6+ format: { signedTxXdr: "AAAA..." }
+    if (typeof obj.signedTxXdr === 'string' && obj.signedTxXdr.length > 0) {
+      return obj.signedTxXdr;
+    }
+
+    // Alternative: { signedXdr: "AAAA..." }
+    if (typeof obj.signedXdr === 'string' && obj.signedXdr.length > 0) {
+      return obj.signedXdr;
+    }
+
+    // Last resort: grab first non-empty string value
+    const strValue = Object.values(obj).find(
+      (v): v is string => typeof v === 'string' && v.length > 0
+    );
     if (strValue) return strValue;
+
+    // Log the unrecognized response for debugging
+    console.error('[Freighter] Unrecognized signTransaction response:', obj);
+    throw new Error(
+      `Freighter returned an unrecognized format: ${JSON.stringify(obj).slice(0, 200)}`
+    );
   }
+
   throw new Error('Freighter returned an unrecognized transaction format');
 }
 
@@ -188,24 +219,31 @@ function normalizeSignedXdr(result: unknown): string {
 export async function signTransaction(xdr: string, network?: string): Promise<string> {
   const opts = network ? { networkPassphrase: network } : undefined;
 
-  let result: unknown;
+  console.log('[Freighter] signTransaction called, network:', network?.slice(0, 20));
 
   // 1. Try npm package
   const api = await getFreighterApi();
   if (api && typeof api.signTransaction === 'function') {
-    result = await api.signTransaction(xdr, opts);
+    console.log('[Freighter] Using npm package signTransaction');
+    const result = await api.signTransaction(xdr, opts);
+    console.log('[Freighter] npm package result type:', typeof result);
+    console.log('[Freighter] npm package result keys:', result ? Object.keys(result) : []);
     return normalizeSignedXdr(result);
   }
 
   // 2. Try window.freighterApi (Freighter v6+ direct injection)
   if (typeof (window as any).freighterApi?.signTransaction === 'function') {
-    result = await (window as any).freighterApi.signTransaction(xdr, opts);
+    console.log('[Freighter] Using window.freighterApi signTransaction');
+    const result = await (window as any).freighterApi.signTransaction(xdr, opts);
+    console.log('[Freighter] window.freighterApi result type:', typeof result);
     return normalizeSignedXdr(result);
   }
 
   // 3. Try window.freighter (legacy injection)
   if (typeof (window as any).freighter?.signTransaction === 'function') {
-    result = await (window as any).freighter.signTransaction(xdr, opts);
+    console.log('[Freighter] Using window.freighter signTransaction');
+    const result = await (window as any).freighter.signTransaction(xdr, opts);
+    console.log('[Freighter] window.freighter result type:', typeof result);
     return normalizeSignedXdr(result);
   }
 
