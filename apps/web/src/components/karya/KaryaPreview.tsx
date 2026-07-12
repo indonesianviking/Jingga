@@ -55,6 +55,24 @@ export function KaryaPreview({ fileUrl, fileType, judul }: KaryaPreviewProps) {
     }
   };
 
+  // Shared blur overlay shown atop the preview content
+  const BlurOverlay = () => (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none select-none">
+      {/* Heavy blur via backdrop-filter + gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/50 to-white/90 dark:from-ink/10 dark:via-ink/40 dark:to-ink/90" />
+      <div className="absolute inset-0 backdrop-blur-[12px]" />
+      {/* Label */}
+      <div className="relative z-20 text-center px-lg py-md">
+        <svg className="w-10 h-10 text-ink-muted mx-auto mb-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M1 1l22 22" />
+        </svg>
+        <p className="text-body-sm font-medium text-ink">Preview is blurred</p>
+        <p className="text-caption text-ink-muted mt-xs">Purchase to access the full content</p>
+      </div>
+    </div>
+  );
+
   if (!fileUrl) {
     return null;
   }
@@ -88,28 +106,37 @@ export function KaryaPreview({ fileUrl, fileType, judul }: KaryaPreviewProps) {
       </button>
 
       {showPreview && (
-        <div className="border-t border-hairline">
+        <div className="border-t border-hairline relative overflow-hidden">
           {loadingPreview ? (
             <div className="flex items-center justify-center p-xl">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : isPdf ? (
-            <iframe
-              src={fileUrl}
-              className="w-full h-[600px] bg-surface-1"
-              title={`Preview: ${judul}`}
-            />
-          ) : isText && textContent ? (
-            <pre className="p-lg text-body-sm text-ink whitespace-pre-wrap font-sans max-h-[600px] overflow-y-auto bg-surface-1">
-              {textContent}
-            </pre>
-          ) : isImage ? (
-            <div className="p-lg flex justify-center bg-surface-1">
-              <img
+            <div className="relative">
+              <iframe
                 src={fileUrl}
-                alt={`Preview: ${judul}`}
-                className="max-w-full max-h-[600px] object-contain"
+                className="w-full h-[600px] bg-surface-1"
+                title={`Preview: ${judul}`}
               />
+              <BlurOverlay />
+            </div>
+          ) : isText && textContent ? (
+            <div className="relative">
+              <pre className="p-lg text-body-sm text-ink whitespace-pre-wrap font-sans max-h-[600px] overflow-y-auto bg-surface-1">
+                {textContent}
+              </pre>
+              <BlurOverlay />
+            </div>
+          ) : isImage ? (
+            <div className="relative">
+              <div className="p-lg flex justify-center bg-surface-1">
+                <img
+                  src={fileUrl}
+                  alt={`Preview: ${judul}`}
+                  className="max-w-full max-h-[600px] object-contain"
+                />
+              </div>
+              <BlurOverlay />
             </div>
           ) : (
             <div className="p-lg text-center">
