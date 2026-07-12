@@ -633,6 +633,67 @@ export async function getResaleHistory(licenseId: string) {
 }
 
 /**
+ * Get all licenses purchased by a user
+ */
+export async function getUserLicenses(walletAddress: string): Promise<{
+  licenses: (LicenseDetail & { karya_judul: string; karya_cover: string | null })[];
+  total_licenses: number;
+  total_spent: number;
+}> {
+  if (!supabaseAdmin) throw new LicenseError('DATABASE_ERROR');
+
+  const { data: licenses } = await supabaseAdmin
+    .from('licenses')
+    .select('*, karya!inner(id, judul, cover_image_url, issuer_wallet)')
+    .eq('purchaser_wallet', walletAddress)
+    .eq('status', 'active')
+    .order('issued_at', { ascending: false });
+
+  if (!licenses) {
+    return { licenses: [], total_licenses: 0, total_spent: 0 };
+  }
+
+  const licenseDetails = await Promise.all(
+    licenses.map(async (license: any) => {
+      const karya = license.karya as any;
+      const { data: resales } = await supabaseAdmin!
+        .from('resale_transactions')
+        .select('sale_price')
+        .eq('license_id', license.id)
+        .eq('status', 'completed');
+
+      return {
+        id: license.id,
+        karya_id: license.karya_id,
+        karya_judul: karya?.judul || 'Unknown',
+        karya_cover: karya?.cover_image_url || null,
+        purchaser_wallet: license.purchaser_wallet,
+        original_author_wallet: license.original_author_wallet,
+        original_author_name: 'Author',
+        license_type: license.license_type,
+        territory: license.territory,
+        duration: license.duration,
+        resale_percentage: license.resale_percentage,
+        license_fee: license.license_fee,
+        status: license.status,
+        issued_at: license.issued_at,
+        expires_at: license.expires_at,
+        resale_count: resales?.length || 0,
+        total_resale_volume: resales?.reduce((sum, r) => sum + r.sale_price, 0) || 0,
+      };
+    })
+  );
+
+  const totalSpent = licenseDetails.reduce((sum, l) => sum + l.license_fee, 0);
+
+  return {
+    licenses: licenseDetails,
+    total_licenses: licenseDetails.length,
+    total_spent: totalSpent,
+  };
+}
+
+/**
  * Get royalties earned by an author from resales
  */
 export async function getAuthorResaleRoyalties(walletAddress: string) {

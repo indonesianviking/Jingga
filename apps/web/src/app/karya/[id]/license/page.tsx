@@ -770,20 +770,52 @@ export default function LicensePage() {
                               : 'Test SDF Network ; September 2015'
                           }
                         />
-                      )}
-
-                      {/* Actions for licensee */}
+                      )}                        {/* Actions for licensee */}
                       {isUserLicense && license.status === 'active' && !isOwner && (
                         <div className="mt-md pt-md border-t border-hairline">
+                          {/* Royalty Display */}
+                          <div className="bg-surface-1 border border-hairline p-md mb-md">
+                            <p className="text-body-sm text-ink-muted mb-xs">Resale Royalty Breakdown</p>
+                            <div className="grid grid-cols-3 gap-md text-center">
+                              <div>
+                                <p className="text-body-lg font-medium text-ink">{license.resale_percentage}%</p>
+                                <p className="text-caption text-ink-subtle">To Author</p>
+                              </div>
+                              <div>
+                                <p className="text-body-lg font-medium text-ink">{100 - license.resale_percentage}%</p>
+                                <p className="text-caption text-ink-subtle">You Keep</p>
+                              </div>
+                              <div>
+                                <p className="text-body-lg font-medium text-ink">{license.resale_count}</p>
+                                <p className="text-caption text-ink-subtle">Past Resales</p>
+                              </div>
+                            </div>
+                            {license.total_resale_volume > 0 && (
+                              <p className="text-caption text-ink-muted mt-xs text-center">
+                                {license.total_resale_volume} XLM total resale volume
+                              </p>
+                            )}
+                          </div>
+
                           <p className="text-body-sm text-ink-muted mb-sm">
                             You hold this license. You can resell it to another party.
                           </p>
-                          <button
-                            onClick={() => alert('Resale flow coming soon')}
-                            className="px-md py-xs border border-hairline text-ink text-body-sm hover:bg-surface-1 transition-colors"
-                          >
-                            Resell License
-                          </button>
+                          <ResellModal
+                            licenseId={license.id}
+                            licenseFee={license.license_fee}
+                            resalePercentage={license.resale_percentage}
+                            networkPassphrase={
+                              process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'public'
+                                ? 'Public Global Stellar Network ; September 2015'
+                                : 'Test SDF Network ; September 2015'
+                            }
+                            onResellComplete={() => {
+                              // Refresh licenses after resale
+                              fetch(`${API_BASE}/api/v1/licenses/karya/${karyaId}`)
+                                .then(r => r.ok ? r.json() : null)
+                                .then(d => { if (d) setLicenses(d.licenses || []); });
+                            }}
+                          />
                         </div>
                       )}
                     </div>
@@ -795,6 +827,304 @@ export default function LicensePage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+// ============================================================
+// Resell License Modal Component
+// ============================================================
+
+function ResellModal({
+  licenseId,
+  licenseFee,
+  resalePercentage,
+  networkPassphrase,
+  onResellComplete,
+}: {
+  licenseId: string;
+  licenseFee: number;
+  resalePercentage: number;
+  networkPassphrase: string;
+  onResellComplete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [buyerWallet, setBuyerWallet] = useState('');
+  const [salePrice, setSalePrice] = useState(String(licenseFee * 2)); // Default 2x
+  const [state, setState] = useState<'idle' | 'initiating' | 'signing' | 'confirming' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [result, setResult] = useState<{ tx_hash: string; explorer_url: string; sale_price: number; author_royalty: number; seller_receives: number } | null>(null);
+
+  const salePriceNum = parseFloat(salePrice) || 0;
+  const authorRoyalty = Math.round(salePriceNum * (resalePercentage / 100) * 1e6) / 1e6;
+  const sellerReceives = Math.round((salePriceNum - authorRoyalty) * 1e6) / 1e6;
+
+  const handleResell = async () => {
+    setState('initiating');
+    setErrorMsg('');
+
+    try {
+      const token = localStorage.getItem('jingga_auth_token');
+
+      // Step 1: Initiate resale
+      const initiateRes = await fetch(`${API_BASE}/api/v1/licenses/resale/initiate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        } as HeadersInit,
+        body: JSON.stringify({
+          license_id: licenseId,
+          buyer_wallet: buyerWallet.trim(),
+          sale_price: salePriceNum,
+        }),
+      });
+
+      if (!initiateRes.ok) {
+        const errData = await initiateRes.json();
+        throw new Error(errData.error || 'Failed to initiate resale');
+      }
+
+      const { xdr } = await initiateRes.json();
+
+      // Step 2: Sign with Freighter
+      setState('signing');
+      const signedXdr = await freighterSign(xdr, networkPassphrase);
+
+      // Step 3: Confirm resale
+      setState('confirming');
+      const confirmRes = await fetch(`${API_BASE}/api/v1/licenses/resale/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        } as HeadersInit,
+        body: JSON.stringify({
+          signed_xdr: signedXdr,
+          license_id: licenseId,
+          buyer_wallet: buyerWallet.trim(),
+          sale_price: salePriceNum,
+        }),
+      });
+
+      if (!confirmRes.ok) {
+        const errData = await confirmRes.json();
+        throw new Error(errData.error || 'Failed to confirm resale');
+      }
+
+      const data = await confirmRes.json();
+      setResult(data);
+      setState('success');
+      onResellComplete();
+    } catch (err: any) {
+      console.error('[ResellModal] Error:', err);
+      setErrorMsg(err.message || 'Resale failed');
+      setState('error');
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => { setOpen(true); setState('idle'); setResult(null); setErrorMsg(''); }}
+        className="px-md py-xs bg-primary text-on-primary text-body-sm hover:bg-primary-hover transition-colors"
+      >
+        Resell License
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-ink/60" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="relative bg-canvas border border-hairline w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between px-xl py-lg border-b border-hairline">
+              <h2 className="text-headline text-ink">Resell License</h2>
+              <button onClick={() => setOpen(false)} className="text-ink-muted hover:text-ink p-xs transition-colors" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-xl py-lg">
+              {/* Success State */}
+              {state === 'success' && result && (
+                <div>
+                  <div className="flex items-center gap-md mb-lg">
+                    <div className="w-12 h-12 bg-semantic-success/10 flex items-center justify-center">
+                      <svg className="w-7 h-7 text-semantic-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-card-title text-ink">License Resold Successfully!</h3>
+                      <p className="text-body-sm text-ink-muted">The license has been transferred to the buyer.</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-1 p-md space-y-sm mb-lg">
+                    <div className="flex justify-between text-body-sm">
+                      <span className="text-ink-muted">Sale Price</span>
+                      <span className="text-ink font-medium">{result.sale_price} XLM</span>
+                    </div>
+                    <div className="flex justify-between text-body-sm">
+                      <span className="text-ink-muted">Author Royalty (10%)</span>
+                      <span className="text-ink">{result.author_royalty} XLM</span>
+                    </div>
+                    <div className="flex justify-between text-body-sm">
+                      <span className="text-ink-muted">You Receive</span>
+                      <span className="text-ink font-medium text-semantic-success">{result.seller_receives} XLM</span>
+                    </div>
+                    <div className="border-t border-hairline pt-sm">
+                      <div className="flex justify-between text-body-sm">
+                        <span className="text-ink-muted">Tx Hash</span>
+                        <a href={result.explorer_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-mono text-xs">
+                          {result.tx_hash.slice(0, 16)}...
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="w-full px-lg py-md bg-primary text-on-primary text-body hover:bg-primary-hover transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+
+              {/* Error State */}
+              {state === 'error' && (
+                <div className="mb-lg">
+                  <div className="flex items-center gap-md mb-md">
+                    <div className="w-10 h-10 bg-semantic-error/10 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-semantic-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-card-title text-ink">Resale Failed</h3>
+                      <p className="text-body-sm text-ink-muted">{errorMsg}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setState('idle'); setErrorMsg(''); }}
+                    className="px-lg py-md bg-primary text-on-primary text-body hover:bg-primary-hover transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {/* Loading States */}
+              {(state === 'initiating' || state === 'signing' || state === 'confirming') && (
+                <div className="flex items-center gap-md mb-lg">
+                  <Spinner size="md" />
+                  <div>
+                    <h3 className="text-card-title text-ink">
+                      {state === 'initiating' && 'Preparing resale...'}
+                      {state === 'signing' && 'Waiting for wallet confirmation...'}
+                      {state === 'confirming' && 'Processing transaction...'}
+                    </h3>
+                    <p className="text-body-sm text-ink-muted">
+                      {state === 'signing' && 'Please confirm in Freighter'}
+                      {state === 'confirming' && 'Submitting to Stellar network'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Form */}
+              {state === 'idle' && (
+                <div className="space-y-lg">
+                  {/* How it Works */}
+                  <div className="bg-surface-1 border border-hairline p-md">
+                    <p className="text-body-sm text-ink-muted mb-sm">
+                      <strong className="text-ink">How Resale Works:</strong>
+                    </p>
+                    <ul className="text-body-sm text-ink-muted space-y-xs">
+                      <li className="flex items-start gap-sm">
+                        <span className="text-primary mt-xxs">&bull;</span>
+                        You set a sale price. The <strong className="text-ink">buyer</strong> pays this amount.
+                      </li>
+                      <li className="flex items-start gap-sm">
+                        <span className="text-semantic-success mt-xxs">&bull;</span>
+                        <strong className="text-ink">{resalePercentage}%</strong> goes to the original author (royalty).
+                      </li>
+                      <li className="flex items-start gap-sm">
+                        <span className="text-primary mt-xxs">&bull;</span>
+                        <strong className="text-ink">{100 - resalePercentage}%</strong> goes to <strong className="text-ink">you</strong>.
+                      </li>
+                      <li className="flex items-start gap-sm">
+                        <span className="text-ink-muted mt-xxs">&bull;</span>
+                        The license transfers to the new buyer.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Buyer Wallet */}
+                  <div className="flex flex-col gap-xs">
+                    <label className="text-body-sm text-ink-muted">Buyer Wallet Address</label>
+                    <input
+                      type="text"
+                      value={buyerWallet}
+                      onChange={(e) => setBuyerWallet(e.target.value)}
+                      placeholder="G..."
+                      className="w-full bg-surface-1 text-body py-[11px] px-md border-b border-hairline placeholder:text-ink-subtle focus:outline-none focus:border-b-2 focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Sale Price */}
+                  <div className="flex flex-col gap-xs">
+                    <label className="text-body-sm text-ink-muted">Sale Price (XLM)</label>
+                    <input
+                      type="number"
+                      value={salePrice}
+                      onChange={(e) => setSalePrice(e.target.value)}
+                      min="0.1"
+                      step="0.1"
+                      className="w-full bg-surface-1 text-body py-[11px] px-md border-b border-hairline placeholder:text-ink-subtle focus:outline-none focus:border-b-2 focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Price Breakdown */}
+                  {salePriceNum > 0 && (
+                    <div className="bg-surface-1 border border-hairline p-md">
+                      <p className="text-body-sm text-ink-muted mb-sm">Price Breakdown</p>
+                      <div className="space-y-xs">
+                        <div className="flex justify-between text-body-sm">
+                          <span className="text-ink-muted">Sale Price</span>
+                          <span className="text-ink">{salePriceNum} XLM</span>
+                        </div>
+                        <div className="flex justify-between text-body-sm">
+                          <span className="text-ink-muted">Author Royalty ({resalePercentage}%)</span>
+                          <span className="text-ink">{authorRoyalty} XLM</span>
+                        </div>
+                        <div className="border-t border-hairline pt-xs flex justify-between text-body-sm">
+                          <span className="text-ink-muted">You Receive</span>
+                          <span className="text-ink font-medium text-semantic-success">{sellerReceives} XLM</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleResell}
+                    disabled={!buyerWallet.trim() || salePriceNum <= 0}
+                    className="w-full px-lg py-md bg-primary text-on-primary text-body font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {buyerWallet.trim() && salePriceNum > 0
+                      ? `Resell for ${salePriceNum} XLM`
+                      : 'Enter buyer and price'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

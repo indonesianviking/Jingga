@@ -10,6 +10,7 @@ import {
   getLicenseDetails,
   getKaryaLicenses,
   getResaleHistory,
+  getUserLicenses,
   getAuthorResaleRoyalties,
   LicenseError,
 } from '../services/license';
@@ -388,6 +389,35 @@ router.get('/:id/xdr', requireAuth, async (req: AuthRequest, res: Response) => {
       return;
     }
     res.status(500).json({ error: 'Failed to build license XDR' });
+  }
+});
+
+// ============================================================
+// GET /api/v1/licenses/user/licenses — Get current user's purchased licenses
+// ※ MUST be before /:id to avoid Express route conflict
+// ============================================================
+router.get('/user/licenses', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user || !supabaseAdmin) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const walletAddress = await getWalletAddress(req.user.sub);
+    if (!walletAddress) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await getUserLicenses(walletAddress);
+    res.json(result);
+  } catch (error) {
+    console.error('[License] User licenses error:', error);
+    if (error instanceof LicenseError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to fetch user licenses' });
   }
 });
 

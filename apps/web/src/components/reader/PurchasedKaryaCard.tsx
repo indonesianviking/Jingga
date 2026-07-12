@@ -20,7 +20,6 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
       setError(null);
       const result = await getAccessUrl(purchase.karya_id);
       setAccessUrl(result.accessUrl);
-
     } catch (err: any) {
       setError(err.message || 'Failed to get access');
     } finally {
@@ -29,7 +28,7 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-canvas border border-hairline overflow-hidden hover:shadow-md transition-shadow">
       {/* Cover */}
       <div className="aspect-[3/4] relative">
         {purchase.cover_image_url ? (
@@ -40,38 +39,38 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-            <span className="text-4xl text-gray-300">W</span>
+          <div className="w-full h-full bg-surface-2 flex items-center justify-center">
+            <span className="text-display-lg text-ink-subtle">{purchase.judul.charAt(0)}</span>
           </div>
         )}
       </div>
 
       {/* Info */}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="p-md">
+        <div className="flex items-start justify-between gap-sm mb-xs">
           <Link
             href={`/karya/${purchase.karya_id}`}
-            className="font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2"
+            className="text-body font-medium text-ink hover:text-primary transition-colors line-clamp-2"
           >
             {purchase.judul}
           </Link>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200 flex-shrink-0">
+          <span className="inline-flex items-center px-xs py-xxs text-caption bg-surface-1 text-ink-muted border border-hairline flex-shrink-0">
             {purchase.kategori}
           </span>
         </div>
 
-        <p className="text-sm text-gray-500 mb-3">{purchase.issuer_name}</p>
+        <p className="text-body-sm text-ink-muted mb-sm">{purchase.issuer_name}</p>
 
-        <div className="text-sm text-gray-400 mb-3">
+        <p className="text-caption text-ink-subtle mb-md">
           Purchased: {new Date(purchase.purchased_at).toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
           })}
-        </div>
+        </p>
 
         {error && (
-          <p className="text-xs text-red-500 mb-2">{error}</p>
+          <p className="text-caption text-semantic-error mb-sm">{error}</p>
         )}
 
         {accessUrl ? (
@@ -79,17 +78,17 @@ export default function PurchasedKaryaCard({ purchase }: PurchasedKaryaCardProps
             href={accessUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full text-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+            className="block w-full text-center px-md py-sm bg-primary text-on-primary text-body-sm font-medium hover:bg-primary-hover transition-colors"
           >
-            File Open
+            Open File
           </a>
         ) : (
           <button
             onClick={handleGetAccess}
             disabled={accessing}
-            className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors text-sm font-medium"
+            className="w-full px-md py-sm bg-primary text-on-primary text-body-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {accessing ? 'Loading...' : 'Download / Read'}
+            {accessing ? 'Loading...' : 'Access File'}
           </button>
         )}
       </div>
