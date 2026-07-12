@@ -162,6 +162,59 @@ sequenceDiagram
     Note over Buyer: Receives file access
 ```
 
+### Royalty Split Flow (Collaborator Revenue)
+
+```mermaid
+sequenceDiagram
+    participant Author as Author / Creator
+    participant UI as Web UI (Editor / Upload)
+    participant API as Jingga API
+    participant DB as Supabase Database
+    participant Soroban as Soroban Contract
+    participant Horizon as Stellar Horizon
+
+    Note over Author,Horizon: **Step 1: Setup — Create Collaborators**
+    Author->>UI: Add collaborators (wallet, name, role, %)
+    UI->>API: POST /api/v1/karya { collaborators: [...] }
+    API->>DB: Insert collaborators records
+    DB-->>API: collaborators saved
+    API-->>UI: Karya created with collaborators
+
+    Note over Author,Horizon: **Step 2: Publish — Create On-Chain Split**
+    Author->>API: POST /api/v1/karya/:id/publish
+    API->>DB: Fetch collaborators
+    DB-->>API: collaborators list
+
+    alt Custodial Wallet (Email Auth)
+        API->>API: Decrypt author's secret key
+        API->>Soroban: create_split(karya_id, creator, recipients)
+        Soroban-->>API: split_created tx_hash
+        API->>DB: Update royalty_splits (status: active)
+    else Freighter Wallet
+        API->>DB: Save royalty_splits (status: pending)
+        Note over API: Author signs Soroban tx via Freighter later
+    end
+
+    Note over Author,Horizon: **Step 3: Purchase — Execute Split**
+    Buyer->>Horizon: Payment tx submitted (XLM)
+    Note over Horizon: Funds arrive at author's wallet
+    Buyer->>API: POST /payments/confirm { signed_xdr, karya_id }
+    API->>Horizon: Submit signed payment
+    Horizon-->>API: payment confirmed
+    API->>DB: Fetch karya with active royalty split
+    DB-->>API: royalty split data
+
+    alt Has Active Split
+        API->>API: Decrypt author's custodial key
+        API->>Soroban: execute_split(karya_id, total_amount, token)
+        Note over Soroban: Divides XLM among recipients per shares
+        Soroban-->>API: split_executed tx_hash
+        API-->>Buyer: access_url + receipt
+    else No Split
+        API-->>Buyer: access_url (100% goes to author)
+    end
+```
+
 ## Features
 
 | Feature | Description | Status |
@@ -178,8 +231,8 @@ sequenceDiagram
 | Dashboard | Revenue stats, karya table, purchase history | Done |
 | Reader Collection | Library of purchased works | Done |
 | Dark Mode | Full theme toggle with localStorage persistence | Done |
-| Collaborator Royalties | Soroban smart contract for automatic royalty splits | Partially Implemented (services + Soroban client done, not yet wired into publish/payment routes) |
-| Licensing Manager | Exclusive/non-exclusive license contracts with resale royalties | Done (9 API endpoints, Soroban integration, resale support) |
+| Collaborator Royalties | Soroban smart contract for automatic royalty splits during publish and payment | Done |
+| Licensing Manager | Exclusive/non-exclusive license contracts with resale royalties | Done |
 | Mobile App | Progressive Web App | Planned |
 
 ## Smart Contracts
@@ -204,11 +257,24 @@ CONTRACT_DEPLOYER_PUBLIC_KEY=GDEB5U56S3WIT3IFIKWTQ2UZPWOLR3W22QHBEV3I4PHBFOHH2BU
 
 The RoyaltySplit contract manages collaborative revenue distribution. When a karya has multiple collaborators (writers, editors, illustrators), the contract automatically splits incoming payments according to predefined percentages.
 
+**How it works:**
+
+1. **Author sets up collaborators** via Upload or Editor page — enters wallet addresses, names, roles, and percentage shares for each collaborator. Total share must not exceed 100%.
+2. **On publish**, the Soroban contract is invoked via `create_split()` to register the royalty configuration on-chain. If the author uses email auth, the backend signs the transaction using the custodial key. Freighter users sign manually.
+3. **On purchase**, the payment confirm route automatically calls `execute_split()` on the contract, which divides the incoming XLM among all collaborators per their predefined shares.
+
+The flow is fully automated — collaborators receive their share instantly when a reader buys the work, with zero manual distribution.
+
+**Supported roles:** Writer (penulis), Editor (editor), Illustrator (ilustrator), Collaborator (kolaborator)
+
 **Key functions:**
 - `create_split(karya_id, recipients[])`: Register a royalty configuration
 - `execute_split(karya_id, total_amount)`: Distribute payment among recipients
 - `calculate_shares(karya_id, total_amount)`: Preview distribution percentages
 - `get_split(karya_id)`: Query existing split configuration
+- `get_total_distributed(karya_id)`: Total XLM distributed to date
+- `get_distributions(karya_id, page, page_size)`: Paginated distribution history
+- `set_split_active(karya_id, active)`: Pause or reactivate a split (admin only)
 
 ### LicenseManager Contract
 
@@ -409,8 +475,23 @@ jingga/
 | DELETE | `/api/v1/karya/:id` | Archive karya |
 | GET | `/api/v1/karya/:id` | Get karya detail with proof |
 | GET | `/api/v1/karya/my/list` | List user's karya (paginated) |
-| POST | `/api/v1/karya/:id/publish` | Publish + mint on Stellar |
+| POST | `/api/v1/karya/:id/publish` | Publish + mint on Stellar + auto-create on-chain royalty split |
 | POST | `/api/v1/karya/:id/view` | Record view |
+
+Collaborators are included in the karya payload as a JSON array:
+
+```json
+"collaborators": [
+  {
+    "wallet_address": "GB7T...",
+    "nama": "Jane Smith",
+    "role": "editor",
+    "persentase": 40
+  }
+]
+```
+
+Roles: `penulis` (Writer), `editor` (Editor), `ilustrator` (Illustrator), `kolaborator` (Collaborator). Total percentage across all collaborators must not exceed 100.
 
 ### Payments
 
@@ -498,6 +579,25 @@ Minting transaction flow:
 Transaction can be signed either:
 - Client-side (Freighter): API returns unsigned XDR → user signs in wallet → submits signed XDR
 - Server-side (Custodial): For email users, the backend signs using the encrypted private key
+
+### Collaborator Royalties (Soroban)
+
+Collaborator Royalties use a Soroban smart contract deployed on Stellar to automate revenue sharing. When a work has multiple collaborators, the contract stores their share percentages on-chain and executes splits automatically on each purchase.
+
+**Flow:**
+1. Author adds collaborators with role and percentage during upload or in the editor
+2. On publish, `create_split()` registers the configuration on the Soroban contract
+3. On each purchase, `execute_split()` divides the payment among all collaborators per their shares
+4. Collaborators can view their earnings on Stellar Expert via the transaction hash
+
+**Custodial vs Freighter:**
+- Email auth users: backend signs Soroban transactions using the encrypted custodial key (automatic)
+- Freighter users: contract requires `creator.require_auth()`, so the author must sign via Freighter (support planned)
+
+**Contract address (testnet):**
+```
+CDATTT53GBFZZZQOVMGVO63FIM6FGRXGEBIVC4I2OPOHWOTXHQOOSWGN
+```
 
 ### Payment Methods
 
