@@ -88,7 +88,7 @@ export async function publishKarya(data: PublishData): Promise<PublishResult> {
 
   // Step 4: Mint on Stellar (if not already done by publish)
   let txHash = publishResult.karya.stellar_tx_hash;
-  let explorerUrl = txHash ? `https://stellar.expert/testnet/tx/${txHash}` : undefined;
+  let explorerUrl = txHash ? `https://stellar.expert/explorer/testnet/tx/${txHash}` : undefined;
   let requiresSigning = false;
   let xdr: string | undefined;
 

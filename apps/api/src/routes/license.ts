@@ -314,7 +314,7 @@ router.post('/:id/submit-soroban', requireAuth, async (req: AuthRequest, res: Re
     res.json({
       success: true,
       tx_hash: result.txHash,
-      explorer_url: `https://stellar.expert/testnet/tx/${result.txHash}`,
+      explorer_url: `https://stellar.expert/explorer/testnet/tx/${result.txHash}`,
     });
   } catch (error) {
     console.error('[License] Submit Soroban error:', error);

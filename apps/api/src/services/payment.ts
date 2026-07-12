@@ -323,7 +323,7 @@ export async function verifyStellarPayment(
       .single();
 
     const accessUrl = karya?.ipfs_link ? await getSignedUrl(karya.ipfs_link, 3600) : '';
-    const explorerUrl = `https://stellar.expert/testnet/tx/${txHash}`;
+    const explorerUrl = getStellarExpertTxUrl(txHash);
     return {
       txHash,
       accessUrl: accessUrl || '',
@@ -504,6 +504,6 @@ export async function getPurchaseHistory(buyerWallet: string) {
     jumlah: tx.jumlah,
     txHash: tx.stellar_tx_hash,
     purchasedAt: tx.confirmed_at,
-    explorerUrl: `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`,
+    explorerUrl: getStellarExpertTxUrl(tx.stellar_tx_hash),
   }));
 }

@@ -43,12 +43,13 @@ export async function getAccountBalance(publicKey: string): Promise<number> {
 
 export function getStellarExpertTxUrl(txHash: string): string {
   const network = process.env.STELLAR_NETWORK || 'testnet';
-  return `https://stellar.expert/${network}/tx/${txHash}`;
+  // Stellar.expert path format: https://stellar.expert/explorer/<network>/tx/<hash>
+  return `https://stellar.expert/explorer/${network}/tx/${txHash}`;
 }
 
 export function getStellarExpertAccountUrl(publicKey: string): string {
   const network = process.env.STELLAR_NETWORK || 'testnet';
-  return `https://stellar.expert/${network}/account/${publicKey}`;
+  return `https://stellar.expert/explorer/${network}/account/${publicKey}`;
 }
 
 // ============================================================

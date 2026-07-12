@@ -109,7 +109,7 @@ export async function getRecentTransactions(walletAddress: string, limit: number
     status: tx.status,
     created_at: tx.created_at,
     explorer_url: tx.stellar_tx_hash
-      ? `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`
+      ? `https://stellar.expert/explorer/testnet/tx/${tx.stellar_tx_hash}`
       : null,
   }));
 }
@@ -201,7 +201,7 @@ export async function getTransactionHistory(
       status: tx.status,
       created_at: tx.created_at,
       explorer_url: tx.stellar_tx_hash
-        ? `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`
+        ? `https://stellar.expert/explorer/testnet/tx/${tx.stellar_tx_hash}`
         : null,
     })),
     pagination: {

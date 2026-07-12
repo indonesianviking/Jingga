@@ -879,7 +879,7 @@ function OnChainSignButton({
           <span className="text-body-sm font-medium">Registered on Stellar</span>
         </div>
         <a
-          href={`https://stellar.expert/testnet/tx/${txHash}`}
+          href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-body-sm text-primary hover:underline"

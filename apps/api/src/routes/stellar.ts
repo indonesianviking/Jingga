@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { supabaseAdmin } from '../lib/supabase';
-import { getServer, getAccountBalance, fundTestnetAccount, getStellarExpertAccountUrl, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
+import { getServer, getAccountBalance, fundTestnetAccount, getStellarExpertTxUrl, getStellarExpertAccountUrl, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
 import { mintKaryaAsset, buildMintTransaction } from '../services/minting';
 import { verifyAuthorship } from '../services/verification';
 import { decryptPrivateKey } from '../lib/crypto';
@@ -66,7 +66,7 @@ router.post('/karya/:id/mint', requireAuth, async (req: AuthRequest, res: Respon
         issuer_wallet: karya.issuer_wallet,
         ledger: result.ledger,
         timestamp: new Date().toISOString(),
-        explorer_url: `https://stellar.expert/testnet/tx/${result.hash}`,
+        explorer_url: getStellarExpertTxUrl(result.hash),
       };
 
       // Update database

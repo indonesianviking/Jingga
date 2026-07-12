@@ -27,7 +27,8 @@ export const ROYALTY_BASIS_POINTS = 10000 as const;
 
 export const KARYA_CATEGORIES = ['fiksi', 'paper', 'puisi', 'non-fiksi'] as const;
 
-export const STELLAR_EXPLORER_TESTNET_URL = 'https://stellar.expert/testnet' as const;
+// Note: Stellar.expert format is /explorer/<network>/tx/<hash>
+export const STELLAR_EXPLORER_TESTNET_URL = 'https://stellar.expert/explorer/testnet' as const;
 
 // ============================================================
 // Soroban Smart Contract Addresses (from deployment)

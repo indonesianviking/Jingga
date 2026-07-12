@@ -155,7 +155,7 @@ export async function getPurchaseList(
         purchased_at: tx.created_at,
         tx_hash: tx.stellar_tx_hash,
         explorer_url: tx.stellar_tx_hash
-          ? `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`
+          ? `https://stellar.expert/explorer/testnet/tx/${tx.stellar_tx_hash}`
           : null,
       };
     }),

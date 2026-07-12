@@ -234,7 +234,7 @@ router.post('/:id/publish', requireAuth, async (req: AuthRequest, res: Response)
         stellar_tx_hash: stellarTxHash,
       },
       explorer_url: stellarTxHash
-        ? `https://stellar.expert/testnet/tx/${stellarTxHash}`
+        ? `https://stellar.expert/explorer/testnet/tx/${stellarTxHash}`
         : null,
     });
   } catch (error) {

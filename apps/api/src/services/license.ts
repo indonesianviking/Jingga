@@ -325,7 +325,7 @@ export async function confirmLicensePurchase(
     license_id: license.id,
     tx_hash: result.hash,
     license_fee: licenseFee,
-    explorer_url: `https://stellar.expert/testnet/tx/${result.hash}`,
+    explorer_url: `https://stellar.expert/explorer/testnet/tx/${result.hash}`,
     requires_signing: false,
     xdr: undefined,
   };
@@ -495,7 +495,7 @@ export async function confirmResale(
     seller_receives: sellerReceives,
     seller_wallet: sellerWallet,
     tx_hash: result.hash,
-    explorer_url: `https://stellar.expert/testnet/tx/${result.hash}`,
+    explorer_url: `https://stellar.expert/explorer/testnet/tx/${result.hash}`,
     requires_signing: false,
   };
 }
@@ -631,7 +631,7 @@ export async function getResaleHistory(licenseId: string) {
     seller_receives: r.seller_receives,
     status: r.status,
     created_at: r.created_at,
-    explorer_url: `https://stellar.expert/testnet/tx/${r.stellar_tx_hash}`,
+    explorer_url: `https://stellar.expert/explorer/testnet/tx/${r.stellar_tx_hash}`,
   }));
 }
 
@@ -671,7 +671,7 @@ export async function getAuthorResaleRoyalties(walletAddress: string) {
       author_royalty_received: r.author_royalty,
       seller_receives: r.seller_receives,
       created_at: r.created_at,
-      explorer_url: `https://stellar.expert/testnet/tx/${r.stellar_tx_hash}`,
+      explorer_url: `https://stellar.expert/explorer/testnet/tx/${r.stellar_tx_hash}`,
     };
   });
 }

@@ -129,7 +129,7 @@ export function FileAccess({ karyaId }: FileAccessProps) {
             <div className="flex items-center justify-between text-body-sm mt-xs">
               <span className="text-ink-muted">Transaction</span>
               <a
-                href={`https://stellar.expert/testnet/tx/${access.transaction.txHash}`}
+                href={`https://stellar.expert/explorer/testnet/tx/${access.transaction.txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline font-mono text-xs"

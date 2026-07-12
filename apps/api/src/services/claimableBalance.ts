@@ -177,7 +177,7 @@ export async function submitClaimableBalance(
     status: 'created',
   });
 
-  const explorerUrl = `https://stellar.expert/testnet/tx/${result.hash}`;
+  const explorerUrl = `https://stellar.expert/explorer/testnet/tx/${result.hash}`;
 
   return {
     balanceId,
@@ -313,7 +313,7 @@ export async function submitClaim(
     }
   }
 
-  const explorerUrl = `https://stellar.expert/testnet/tx/${result.hash}`;
+  const explorerUrl = `https://stellar.expert/explorer/testnet/tx/${result.hash}`;
 
   return {
     txHash: result.hash,
