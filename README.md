@@ -1,6 +1,6 @@
 # Jingga
 
-> Publication and royalty platform for independent writers, researchers, and creators across Southeast Asia. Built on Stellar — instant payments, transparent royalties, no middlemen.
+> Publication and royalty platform for independent writers, researchers, and creators across Southeast Asia. Built on Stellar: instant payments, transparent royalties, no middlemen.
 
 ![Jingga Web Preview](https://raw.githubusercontent.com/indonesianviking/jingga-assets/bf5bb39f276edcd793d60b2fbd24a998689a9c9c/jingga-web.jpg)
 
@@ -22,16 +22,16 @@
 
 ## Overview
 
-Jingga is a Web3 publication platform that connects writers and readers directly on the Stellar blockchain. Writers publish their work as on-chain assets, set their own prices, and receive payments instantly — with zero platform fees. Smart contracts handle royalty splits for collaborators, and Stellar's built-in escrow (Claimable Balance) enables trustless transactions.
+Jingga is a Web3 publication platform that connects writers and readers directly on the Stellar blockchain. Writers publish their work as on-chain assets, set their own prices, and receive payments instantly, with zero platform fees. Smart contracts handle royalty splits for collaborators, and Stellar's built-in escrow (Claimable Balance) enables trustless transactions.
 
 ### Why Jingga?
 
-- **Zero platform fees** — 100% of revenue goes to creators
-- **Instant settlement** — payments arrive in seconds via Stellar network
-- **Proof of ownership** — each work is minted as a unique Stellar asset
-- **Automatic royalties** — Soroban smart contracts split revenue among collaborators
-- **Cross-currency payments** — Stellar DEX enables payments in USDC, XLM, and more
-- **Decentralized storage** — content is pinned to IPFS via Pinata
+- **Zero platform fees**: 100% of revenue goes to creators
+- **Instant settlement**: payments arrive in seconds via Stellar network
+- **Proof of ownership**: each work is minted as a unique Stellar asset
+- **Automatic royalties**: Soroban smart contracts split revenue among collaborators
+- **Cross-currency payments**: Stellar DEX enables payments in USDC, XLM, and more
+- **Decentralized storage**: content is pinned to IPFS via Pinata
 
 ## Architecture
 
@@ -205,19 +205,19 @@ CONTRACT_DEPLOYER_PUBLIC_KEY=GDEB5U56S3WIT3IFIKWTQ2UZPWOLR3W22QHBEV3I4PHBFOHH2BU
 The RoyaltySplit contract manages collaborative revenue distribution. When a karya has multiple collaborators (writers, editors, illustrators), the contract automatically splits incoming payments according to predefined percentages.
 
 **Key functions:**
-- `create_split(karya_id, recipients[])` — Register a royalty configuration
-- `execute_split(karya_id, total_amount)` — Distribute payment among recipients
-- `calculate_shares(karya_id, total_amount)` — Preview distribution percentages
-- `get_split(karya_id)` — Query existing split configuration
+- `create_split(karya_id, recipients[])`: Register a royalty configuration
+- `execute_split(karya_id, total_amount)`: Distribute payment among recipients
+- `calculate_shares(karya_id, total_amount)`: Preview distribution percentages
+- `get_split(karya_id)`: Query existing split configuration
 
 ### LicenseManager Contract
 
 The LicenseManager contract handles content licensing for secondary usage (adaptations, translations, republications).
 
 **Key functions:**
-- `issue_license(karya_id, licensee, type, territory, duration)` — Grant usage rights
-- `revoke_license(license_id)` — Revoke an active license
-- `verify_license(karya_id, wallet)` — Check if a wallet holds a valid license
+- `issue_license(karya_id, licensee, type, territory, duration)`: Grant usage rights
+- `revoke_license(license_id)`: Revoke an active license
+- `verify_license(karya_id, wallet)`: Check if a wallet holds a valid license
 
 ## Tech Stack
 
@@ -282,7 +282,7 @@ PINATA_SECRET_KEY=your-pinata-secret-key
 PINATA_JWT=your-pinata-jwt
 PINATA_GATEWAY_URL=https://gateway.pinata.cloud/ipfs
 
-# Contracts (optional — uses defaults)
+# Contracts (optional, uses defaults)
 CONTRACT_ROYALTY_SPLIT=CDATTT53GBFZZZQOVMGVO63FIM6FGRXGEBIVC4I2OPOHWOTXHQOOSWGN
 CONTRACT_LICENSE_MANAGER=CD3PN2HLF2ZL6AXLDD3RUE5WCLK3RZDV6LOVB6KREFO3YYLNZAHBKKMF
 
@@ -561,11 +561,11 @@ The transaction shows:
 5. Open a Pull Request
 
 Commit messages follow conventional commits:
-- `feat:` — New feature
-- `fix:` — Bug fix
-- `docs:` — Documentation
-- `refactor:` — Code restructuring
-- `perf:` — Performance improvement
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation
+- `refactor:` Code restructuring
+- `perf:` Performance improvement
 
 ## License
 

@@ -120,6 +120,44 @@ export default function EditorPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [leaving, setLeaving] = useState(false);
 
+  // Collaborator state
+  const [collaborators, setCollaborators] = useState<Array<{
+    wallet_address: string;
+    nama: string;
+    role: string;
+    persentase: number;
+  }>>([]);
+
+  const collaboratorRoles = ['penulis', 'editor', 'ilustrator', 'kolaborator'];
+  const collaboratorRoleLabels: Record<string, string> = {
+    penulis: 'Writer',
+    editor: 'Editor',
+    ilustrator: 'Illustrator',
+    kolaborator: 'Collaborator',
+  };
+
+  const addCollaborator = () => {
+    setCollaborators([...collaborators, {
+      wallet_address: '',
+      nama: '',
+      role: 'kolaborator',
+      persentase: 0,
+    }]);
+  };
+
+  const updateCollaborator = (index: number, field: string, value: string | number) => {
+    const updated = [...collaborators];
+    (updated[index] as any)[field] = value;
+    setCollaborators(updated);
+  };
+
+  const removeCollaborator = (index: number) => {
+    setCollaborators(collaborators.filter((_, i) => i !== index));
+  };
+
+  const totalPercentage = collaborators.reduce((sum, c) => sum + (c.persentase || 0), 0);
+  const isPercentageValid = totalPercentage <= 100;
+
   const handleLeaveRoom = useCallback(() => {
     setLeaving(true);
 
@@ -179,6 +217,7 @@ export default function EditorPage() {
         kategori: form.kategori,
         content,
         status: 'draft',
+        collaborators: collaborators.length > 0 ? collaborators : undefined,
       };
 
       if (savedDraftId) {
@@ -200,7 +239,7 @@ export default function EditorPage() {
     } finally {
       setSaving(false);
     }
-  }, [form, savedDraftId]);
+  }, [form, savedDraftId, collaborators]);
 
   const handlePublish = useCallback(async () => {
     if (!form.judul.trim()) {
@@ -226,6 +265,7 @@ export default function EditorPage() {
         harga: parseFloat(form.harga),
         content,
         status: 'published',
+        collaborators: collaborators.length > 0 ? collaborators : undefined,
       };
 
       if (savedDraftId) {
@@ -256,7 +296,7 @@ export default function EditorPage() {
     } finally {
       setPublishing(false);
     }
-  }, [form, savedDraftId, router]);
+  }, [form, savedDraftId, router, collaborators]);
 
   // Auth gate
   if (authLoading) {
@@ -467,6 +507,110 @@ export default function EditorPage() {
                   <p className="text-caption text-ink-subtle mt-xs">Reader access price</p>
                 </div>
               </div>
+            </div>
+
+            {/* Collaborators */}
+            <div className="bg-canvas border border-hairline p-lg">
+              <div className="flex items-center justify-between mb-md">
+                <div>
+                  <h3 className="text-card-title text-ink mb-xs">Collaborators</h3>
+                  <p className="text-body-sm text-ink-muted">
+                    Add co-authors to share revenue automatically.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addCollaborator}
+                  className="bg-primary text-on-primary text-button py-xs px-md hover:bg-primary-hover transition-colors"
+                >
+                  + Add
+                </button>
+              </div>
+
+              {collaborators.length > 0 && (
+                <div className="space-y-md mb-md">
+                  {collaborators.map((collab, i) => (
+                    <div
+                      key={i}
+                      className="grid grid-cols-12 gap-sm items-end border border-hairline p-md"
+                    >
+                      <div className="col-span-3">
+                        <label className="block text-caption text-ink-muted mb-xs">Wallet *</label>
+                        <input
+                          type="text"
+                          value={collab.wallet_address}
+                          onChange={(e) => updateCollaborator(i, 'wallet_address', e.target.value)}
+                          placeholder="G..."
+                          className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary font-mono"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <label className="block text-caption text-ink-muted mb-xs">Name</label>
+                        <input
+                          type="text"
+                          value={collab.nama}
+                          onChange={(e) => updateCollaborator(i, 'nama', e.target.value)}
+                          placeholder="e.g. John"
+                          className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <label className="block text-caption text-ink-muted mb-xs">Role</label>
+                        <select
+                          value={collab.role}
+                          onChange={(e) => updateCollaborator(i, 'role', e.target.value)}
+                          className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary"
+                        >
+                          {collaboratorRoles.map((r) => (
+                            <option key={r} value={r}>{collaboratorRoleLabels[r]}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-caption text-ink-muted mb-xs">%</label>
+                        <input
+                          type="number"
+                          value={collab.persentase || ''}
+                          onChange={(e) => updateCollaborator(i, 'persentase', Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                          placeholder="0"
+                          min="0"
+                          max="100"
+                          className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary"
+                        />
+                      </div>
+                      <div className="col-span-1 flex items-end pb-xs">
+                        <button
+                          type="button"
+                          onClick={() => removeCollaborator(i)}
+                          className="text-semantic-error hover:text-semantic-error/80 transition-colors"
+                          title="Remove collaborator"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Percentage indicator */}
+              {collaborators.length > 0 && (
+                <div className="flex items-center gap-sm text-body-sm">
+                  <span className="text-ink-muted">Total: {totalPercentage}%</span>
+                  {!isPercentageValid && (
+                    <span className="text-semantic-error font-medium">
+                      Exceeds 100%!
+                    </span>
+                  )}
+                  {isPercentageValid && totalPercentage > 0 && (
+                    <span className="text-semantic-success">
+                      Creator keeps {100 - totalPercentage}%
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Actions */}

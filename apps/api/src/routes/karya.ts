@@ -27,13 +27,16 @@ router.post('/', requireAuth, upload.fields([
       return;
     }
 
+    const parseMaybeString = (val: any) =>
+      typeof val === 'string' ? JSON.parse(val) : val;
+
     const formData = {
       judul: req.body.judul,
       deskripsi: req.body.deskripsi,
       kategori: req.body.kategori,
       harga: parseFloat(req.body.harga),
-      tags: req.body.tags ? JSON.parse(req.body.tags) : undefined,
-      collaborators: req.body.collaborators ? JSON.parse(req.body.collaborators) : undefined,
+      tags: req.body.tags ? parseMaybeString(req.body.tags) : undefined,
+      collaborators: req.body.collaborators ? parseMaybeString(req.body.collaborators) : undefined,
     };
 
     const parsed = createKaryaSchema.safeParse(formData);
@@ -349,6 +352,41 @@ router.put('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
     if (updateError) {
       res.status(500).json({ error: 'Failed to update work' });
       return;
+    }
+
+    // Handle collaborators if provided
+    const collaboratorsRaw = req.body.collaborators;
+    if (collaboratorsRaw !== undefined) {
+      const collaborators = Array.isArray(collaboratorsRaw)
+        ? collaboratorsRaw
+        : typeof collaboratorsRaw === 'string'
+          ? JSON.parse(collaboratorsRaw)
+          : [];
+
+      const totalPercentage = collaborators.reduce((sum: number, c: any) => sum + (c.persentase || 0), 0);
+      if (totalPercentage > 100) {
+        res.status(400).json({ error: KARYA_ERRORS.INVALID_COLLABORATORS.message });
+        return;
+      }
+
+      // Delete existing collaborators and insert new ones
+      await supabaseAdmin.from('collaborators').delete().eq('karya_id', id);
+
+      if (collaborators.length > 0) {
+        const { error: collabError } = await supabaseAdmin.from('collaborators').insert(
+          collaborators.map((c: any) => ({
+            karya_id: id,
+            wallet_address: c.wallet_address,
+            nama: c.nama || '',
+            role: c.role || 'kolaborator',
+            persentase: c.persentase,
+          }))
+        );
+
+        if (collabError) {
+          console.error('[Karya] Update collaborators error:', collabError);
+        }
+      }
     }
 
     res.json({ success: true });
