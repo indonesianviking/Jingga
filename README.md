@@ -178,8 +178,8 @@ sequenceDiagram
 | Dashboard | Revenue stats, karya table, purchase history | Done |
 | Reader Collection | Library of purchased works | Done |
 | Dark Mode | Full theme toggle with localStorage persistence | Done |
-| Collaborator Royalties | Soroban smart contract for automatic splits | In Development |
-| Licensing Manager | Exclusive/non-exclusive license contracts | In Development |
+| Collaborator Royalties | Soroban smart contract for automatic royalty splits | Partially Implemented (services + Soroban client done, not yet wired into publish/payment routes) |
+| Licensing Manager | Exclusive/non-exclusive license contracts with resale royalties | Done (9 API endpoints, Soroban integration, resale support) |
 | Mobile App | Progressive Web App | Planned |
 
 ## Smart Contracts
