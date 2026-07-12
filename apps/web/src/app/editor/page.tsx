@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout } from '@/components/layout/Layout';
 import JinggaEditor from '@/components/editor/JinggaEditor';
 import { apiRequest } from '@/lib/api';
+import { RoomUsers } from '@/components/editor/RoomUsers';
 
 interface DraftData {
   id?: string;
@@ -408,14 +409,25 @@ export default function EditorPage() {
               </div>
             </div>
 
+            {/* Room Users — real-time collab */}
+            {providerRef.current && walletAddress && (
+              <RoomUsers
+                provider={providerRef.current}
+                currentUser={{
+                  name: truncateAddress(walletAddress, 6),
+                  color: userColor,
+                }}
+              />
+            )}
+
             {/* Tips */}
             <div className="bg-surface-1 border border-hairline p-lg">
               <h3 className="text-card-title text-ink mb-sm">Tips</h3>
               <ul className="space-y-xs text-body-sm text-ink-muted">
+                <li>Use / for slash commands</li>
                 <li>Use headings for clear structure</li>
                 <li>Upload images for illustrations</li>
                 <li>Save draft before publishing</li>
-                <li>Price in XLM (Stellar)</li>
               </ul>
             </div>
           </div>
