@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import http from 'http';
 
 // Load .env — handles both CWDs (running from root via pnpm OR directly from apps/api/)
 dotenv.config();
@@ -19,6 +20,7 @@ import readerRoutes from './routes/reader';
 import licenseRoutes from './routes/license';
 import badgeRoutes from './routes/badges';
 import academicRoutes from './routes/academic';
+import { startCollabServer } from './ws';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3001;
@@ -66,9 +68,14 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
+// Create HTTP server & start WebSocket for Yjs collaboration
+const server = http.createServer(app);
+startCollabServer(server);
+
+server.listen(PORT, () => {
   console.log(`[Jingga API] Running on http://localhost:${PORT}`);
   console.log(`[Jingga API] Health: http://localhost:${PORT}/api/v1/health`);
+  console.log(`[Collab WS] ws://localhost:${PORT}/collab`);
 });
 
 export default app;

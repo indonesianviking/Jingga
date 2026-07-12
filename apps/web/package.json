@@ -16,6 +16,8 @@
     "@tiptap/core": "^3.27.3",
     "@tiptap/extension-code-block": "^3.27.3",
     "@tiptap/extension-code-block-lowlight": "^3.27.3",
+    "@tiptap/extension-collaboration": "^3.27.3",
+    "@tiptap/extension-collaboration-cursor": "^3.0.0",
     "@tiptap/extension-heading": "^3.27.2",
     "@tiptap/extension-image": "^3.27.3",
     "@tiptap/extension-link": "^3.27.3",
@@ -35,7 +37,9 @@
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "tippy.js": "^6.3.7"
+    "tippy.js": "^6.3.7",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

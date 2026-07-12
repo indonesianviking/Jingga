@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout/Layout';
@@ -27,6 +29,53 @@ export default function EditorPage() {
     harga: '',
     content: '',
   });
+  // Collaboration (real-time co-editing via Yjs)
+  const ydocRef = useRef<Y.Doc | null>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const [collabStatus, setCollabStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+
+  // Initialize Y.Doc + WebSocket provider once
+  useEffect(() => {
+    const WS_URL = process.env.NEXT_PUBLIC_WS_URL || `ws://localhost:3001/collab`;
+    const ydoc = new Y.Doc();
+    // Use a shared room so all connected users collaborate on the same document
+    const room = 'jingga-editor-live';
+    const provider = new WebsocketProvider(WS_URL, room, ydoc, {
+      connect: true,
+    });
+
+    provider.on('status', (event: { status: string }) => {
+      setCollabStatus(event.status as 'connecting' | 'connected' | 'disconnected');
+    });
+
+    ydocRef.current = ydoc;
+    providerRef.current = provider;
+
+    return () => {
+      provider.destroy();
+      ydoc.destroy();
+    };
+  }, [walletAddress]);
+
+  // User color derived from wallet address for consistent cursor color
+  const userColor = React.useMemo(() => {
+    if (!walletAddress) return '#0f62fe';
+    const colors = ['#0f62fe', '#24a148', '#da1e28', '#f1c21b', '#8a3ffc', '#009d9a', '#ee538b', '#1192e8'];
+    const hash = walletAddress.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  }, [walletAddress]);
+
+  const collaborationConfig = ydocRef.current && providerRef.current && walletAddress
+    ? {
+        ydoc: ydocRef.current,
+        provider: providerRef.current,
+        user: {
+          name: truncateAddress(walletAddress, 6),
+          color: userColor,
+        },
+      }
+    : undefined;
+
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
@@ -195,15 +244,32 @@ export default function EditorPage() {
       <div className="mx-auto max-w-[1200px] py-xl px-lg">
         {/* Header */}
         <div className="mb-xl">
-          <h1 className="text-display-md text-ink mb-sm">Editor</h1>
-          <p className="text-body text-ink-muted">
-            Write, edit, and publish your work directly to the Marketplace
-            {walletAddress && (
-              <span className="font-mono text-caption text-ink-subtle ml-xs">
-                ({truncateAddress(walletAddress, 6)})
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-display-md text-ink mb-sm">Editor</h1>
+              <p className="text-body text-ink-muted">
+                Write, edit, and publish your work directly to the Marketplace
+                {walletAddress && (
+                  <span className="font-mono text-caption text-ink-subtle ml-xs">
+                    ({truncateAddress(walletAddress, 6)})
+                  </span>
+                )}
+              </p>
+            </div>
+            {/* Collaboration indicator */}
+            <div className="flex items-center gap-xs text-body-sm">
+              <span className={`w-2 h-2 rounded-full ${
+                collabStatus === 'connected' ? 'bg-semantic-success' :
+                collabStatus === 'connecting' ? 'bg-semantic-warning' :
+                'bg-semantic-error'
+              }`} />
+              <span className="text-ink-muted">
+                {collabStatus === 'connected' ? 'Live' :
+                 collabStatus === 'connecting' ? 'Connecting...' :
+                 'Offline'}
               </span>
-            )}
-          </p>
+            </div>
+          </div>
         </div>
 
         {/* Message */}
@@ -224,6 +290,7 @@ export default function EditorPage() {
               initialContent={form.content}
               onChange={handleEditorChange}
               placeholder="Start writing your work here... Supports rich text, images, headings, and more."
+              collaboration={collaborationConfig}
             />
           </div>
 

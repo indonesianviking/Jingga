@@ -13,6 +13,10 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import * as Y from 'yjs';
+import type { WebsocketProvider } from 'y-websocket';
 import { common, createLowlight } from 'lowlight';
 import { API_BASE, getAuthToken } from '@/lib/api';
 import { SlashCommandExtension } from './slash-command';
@@ -24,12 +28,20 @@ const lowlight = createLowlight(common);
 // Types
 // ============================================================
 
+interface CollaborationConfig {
+  ydoc: Y.Doc;
+  provider: WebsocketProvider;
+  user: { name: string; color: string };
+}
+
 interface JinggaEditorProps {
   initialContent?: string;
   onChange?: (html: string, json: unknown) => void;
   editable?: boolean;
   placeholder?: string;
   minHeight?: number;
+  /** Enable real-time Yjs collaboration */
+  collaboration?: CollaborationConfig;
 }
 
 // ============================================================
@@ -103,6 +115,7 @@ export default function JinggaEditor({
   editable = true,
   placeholder = 'Start writing your masterpiece...',
   minHeight = 500,
+  collaboration,
 }: JinggaEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,6 +156,18 @@ export default function JinggaEditor({
       TableHeader,
       // Slash Commands
       SlashCommandExtension,
+      // Collaboration (real-time co-editing)
+      ...(collaboration
+        ? [
+            Collaboration.configure({
+              document: collaboration.ydoc,
+            }),
+            CollaborationCursor.configure({
+              provider: collaboration.provider as any,
+              user: collaboration.user,
+            }),
+          ]
+        : []),
     ],
     content: initialContent || '<p></p>',
     editable,
