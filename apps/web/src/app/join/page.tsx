@@ -46,6 +46,48 @@ function generateSessionId(): string {
   return 'session-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2, 10));
 }
 
+/**
+ * Extract a clean room ID from various input formats:
+ * - Plain ID: "session-abc123"
+ * - Full URL: "http://localhost:3000/editor?room=session-abc123"
+ * - Path only: "/editor?room=session-abc123"
+ * - Just query: "?room=session-abc123"
+ * Returns null if no room ID can be extracted.
+ */
+function extractRoomId(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  try {
+    // If it looks like a full URL (with origin), parse it
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      const url = new URL(trimmed);
+      const room = url.searchParams.get('room');
+      if (room) return room;
+    }
+
+    // If someone types just "room=xxx" without ? prefix
+    if (trimmed.startsWith('room=')) {
+      return trimmed.slice(5);
+    }
+
+    // If it looks like a path + query (starts with / or ?), extract from query
+    if (trimmed.startsWith('/') || trimmed.startsWith('?')) {
+      // Normalize: prepend a fake origin to make URL parsing work
+      const fakeUrl = new URL(`http://x${trimmed.startsWith('/') ? '' : '/'}${trimmed}`);
+      const room = fakeUrl.searchParams.get('room');
+      if (room) return room;
+    }
+  } catch {
+    // URL parsing failed — try regex fallback
+    const match = trimmed.match(/[?&]room=([^&]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+
+  // Plain session ID — return as-is
+  return trimmed;
+}
+
 // ============================================================
 // Component
 // ============================================================
@@ -70,14 +112,23 @@ export default function JoinPage() {
   };
 
   const handleJoinRoom = () => {
-    const id = sessionId.trim();
-    if (!id) {
-      setError('Please enter a session ID');
+    const raw = sessionId.trim();
+    if (!raw) {
+      setError('Please enter a session ID or paste a room link');
       return;
     }
+
+    // Extract clean room ID from any input format
+    const extracted = extractRoomId(raw);
+    if (!extracted) {
+      setError('Could not extract a valid session ID from that input');
+      return;
+    }
+
     setError(null);
-    addCachedRoom(id, id.length > 20 ? id.slice(0, 20) + '...' : id);
-    router.push(`/editor?room=${encodeURIComponent(id)}`);
+    setSessionId(''); // Clear input after joining
+    addCachedRoom(extracted, extracted.length > 20 ? extracted.slice(0, 20) + '...' : extracted);
+    router.push(`/editor?room=${encodeURIComponent(extracted)}`);
   };
 
   const handleJoinRecent = (room: CachedRoom) => {
@@ -128,7 +179,7 @@ export default function JoinPage() {
                   setError(null);
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="Paste a session ID or create a new room..."
+                placeholder="Paste a room link or session ID to join..."
                 className="flex-1 px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary"
               />
               <button

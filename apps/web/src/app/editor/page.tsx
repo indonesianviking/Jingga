@@ -293,7 +293,7 @@ export default function EditorPage() {
                   </span>
                 )}
               </p>
-              {/* Room ID — click to copy shareable link */}
+              {/* Room ID — copy shareable link */}
               <p className="text-body-sm text-ink-subtle mt-xs flex items-center gap-xs flex-wrap">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -301,9 +301,9 @@ export default function EditorPage() {
                 Room: <code className="font-mono text-xs bg-surface-1 px-xs py-xxs border border-hairline">{roomId}</code>
                 <button
                   onClick={() => {
-                    const url = `${window.location.origin}/editor?room=${roomId}`;
+                    const url = `${window.location.origin}/editor?room=${encodeURIComponent(roomId)}`;
                     navigator.clipboard.writeText(url);
-                    setMessage({ type: 'success', text: 'Room link copied!' });
+                    setMessage({ type: 'success', text: 'Room link copied — share with collaborators!' });
                   }}
                   className="text-primary hover:underline text-caption"
                   title="Copy room link to clipboard"
