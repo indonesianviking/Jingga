@@ -9,7 +9,7 @@ import { generateAssetCode } from '../services/assetCode';
 import { createKaryaSchema, updateKaryaSchema } from '../schemas/karya';
 import { KARYA_ERRORS } from '../errors/KaryaError';
 import { verifyAuthorship } from '../services/verification';
-import { mintKaryaAsset, buildMintTransaction } from '../services/minting';
+import { mintKaryaAsset, buildMintTransaction, createRoyaltySplitForKarya } from '../services/minting';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -223,6 +223,61 @@ router.post('/:id/publish', requireAuth, async (req: AuthRequest, res: Response)
       console.error('[Karya] Publish update error:', updateError);
       res.status(500).json({ error: 'Failed to publish work' });
       return;
+    }
+
+    // Step 3: Auto-create royalty split on-chain if there are collaborators (non-blocking)
+    try {
+      const { data: collaborators } = await supabaseAdmin
+        .from('collaborators')
+        .select('wallet_address, role, persentase')
+        .eq('karya_id', id);
+
+      if (collaborators && collaborators.length > 0) {
+        // Check if user has a custodial wallet (email auth) — needed for signing
+        const { data: custodialWallet } = await supabaseAdmin
+          .from('custodial_wallets')
+          .select('encrypted_private_key, encryption_iv')
+          .eq('user_id', req.user.sub)
+          .maybeSingle();
+
+        if (custodialWallet) {
+          const [iv, authTag] = custodialWallet.encryption_iv.split(':');
+          const { decryptPrivateKey } = await import('../lib/crypto');
+          const secretKey = decryptPrivateKey(
+            custodialWallet.encrypted_private_key,
+            iv,
+            authTag
+          );
+
+          const recipients = collaborators.map((c: any) => ({
+            wallet: c.wallet_address,
+            percentageBps: Math.round(c.persentase * 100), // Convert % to basis points
+            role: c.role,
+          }));
+
+          const splitResult = await createRoyaltySplitForKarya(id, secretKey, recipients);
+          if (splitResult.success) {
+            console.log(`[Karya] Royalty split created: ${splitResult.txHash}`);
+          } else {
+            console.warn('[Karya] Royalty split failed (non-fatal):', splitResult.error);
+          }
+        } else {
+          console.log('[Karya] Freighter user — royalty split requires manual Soroban signing');
+          // Record split in DB as pending — author can sign via Freighter later
+          const totalBps = collaborators.reduce(
+            (sum: number, c: any) => sum + Math.round(c.persentase * 100),
+            0
+          );
+          await supabaseAdmin.from('royalty_splits').upsert({
+            karya_id: id,
+            contract_address: process.env.CONTRACT_ROYALTY_SPLIT || '',
+            total_percentage: totalBps / 100,
+            status: 'pending',
+          });
+        }
+      }
+    } catch (splitError) {
+      console.warn('[Karya] Royalty split error (non-fatal):', splitError);
     }
 
     res.json({

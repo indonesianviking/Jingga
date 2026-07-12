@@ -28,6 +28,7 @@ import {
   PATH_PAYMENT_ERRORS,
 } from '../services/pathPayment';
 import { signTransactionForUser } from '../services/signing';
+import { executeRoyaltySplitForPayment } from '../services/minting';
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -125,6 +126,66 @@ router.post('/confirm', requireAuth, async (req: AuthRequest, res: Response) => 
     }
 
     const result = await confirmPayment(signed_xdr, karya_id, user.wallet_address);
+
+    // Execute royalty split if this karya has an active split (non-blocking)
+    try {
+      const { data: split } = await supabaseAdmin
+        .from('royalty_splits')
+        .select('id, status')
+        .eq('karya_id', karya_id)
+        .maybeSingle();
+
+      if (split && split.status === 'active') {
+        // Get the karya to find the author (issuer_wallet)
+        const { data: karya } = await supabaseAdmin
+          .from('karya')
+          .select('harga, issuer_wallet')
+          .eq('id', karya_id)
+          .single();
+
+        if (karya) {
+          // Find the author's user record by wallet address
+          const { data: authorUser } = await supabaseAdmin
+            .from('users')
+            .select('id')
+            .eq('wallet_address', karya.issuer_wallet)
+            .single();
+
+          if (authorUser) {
+            // Get the AUTHOR's custodial wallet (not the buyer's)
+            const { data: custodialWallet } = await supabaseAdmin
+              .from('custodial_wallets')
+              .select('encrypted_private_key, encryption_iv')
+              .eq('user_id', authorUser.id)
+              .maybeSingle();
+
+            if (custodialWallet) {
+              const { decryptPrivateKey } = await import('../lib/crypto');
+              const [iv, authTag] = custodialWallet.encryption_iv.split(':');
+              const secretKey = decryptPrivateKey(
+                custodialWallet.encrypted_private_key,
+                iv,
+                authTag
+              );
+
+              const execResult = await executeRoyaltySplitForPayment(
+                karya_id,
+                karya.harga,
+                secretKey
+              );
+              if (execResult.success && execResult.txHash) {
+                console.log(`[Payments] Royalty split executed: ${execResult.txHash}`);
+              } else if (execResult.error) {
+                console.warn('[Payments] Royalty split execution failed (non-fatal):', execResult.error);
+              }
+            }
+          }
+        }
+      }
+    } catch (splitError) {
+      console.warn('[Payments] Royalty split execution error (non-fatal):', splitError);
+    }
+
     res.json(result);
   } catch (error) {
     console.error('[Payments] Confirm error:', error);
