@@ -26,6 +26,7 @@ import {
   PathPaymentError,
   PATH_PAYMENT_ERRORS,
 } from '../services/pathPayment';
+import { signTransactionForUser } from '../services/signing';
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -61,6 +62,25 @@ router.post('/initiate', requireAuth, async (req: AuthRequest, res: Response) =>
     }
 
     const result = await initiatePayment(user.wallet_address, karya_id);
+
+    // Check if user has a custodial wallet (email users)
+    // If so, sign the XDR server-side so the frontend doesn't need Freighter
+    const { data: custodialWallet } = await supabaseAdmin
+      .from('custodial_wallets')
+      .select('public_key')
+      .eq('user_id', req.user.sub)
+      .maybeSingle();
+
+    if (custodialWallet) {
+      try {
+        const signedXdr = await signTransactionForUser(req.user.sub, result.xdr);
+        res.json({ ...result, signed_xdr: signedXdr, custodial: true });
+        return;
+      } catch (signError) {
+        console.warn('[Payments] Custodial sign failed, falling back to Freighter:', signError);
+      }
+    }
+
     res.json(result);
   } catch (error) {
     console.error('[Payments] Initiate error:', error);

@@ -61,27 +61,33 @@ export function PurchaseFlow({
         throw new Error(initData.error || 'Failed to initiate payment');
       }
 
-      const { xdr, amount, recipient, memo } = await initiateRes.json();
+      const initData = await initiateRes.json();
+      const { xdr, signed_xdr, custodial } = initData;
 
-      // 2. Sign with Freighter
-      setState('signing');
+      // 2. Sign transaction
+      let signedXdr: string;
 
-      // Check if Freighter is available
-      if (typeof window === 'undefined' || !(window as any).freighter) {
-        throw new Error('Freighter wallet not found. Please install Freighter extension.');
+      if (custodial && signed_xdr) {
+        // Custodial flow: backend already signed (email/managed wallet users)
+        signedXdr = signed_xdr;
+      } else {
+        // Freighter flow: user signs with their wallet extension
+        setState('signing');
+
+        if (typeof window === 'undefined' || !(window as any).freighter) {
+          throw new Error('Freighter wallet not found. Please install Freighter extension.');
+        }
+
+        const freighter = (window as any).freighter;
+
+        const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'public'
+          ? 'Public Global Stellar Network ; September 2015'
+          : 'Test SDF Network ; September 2015';
+
+        signedXdr = await freighter.signTransaction(xdr, {
+          networkPassphrase,
+        });
       }
-
-      const freighter = (window as any).freighter;
-
-      // Get network passphrase
-      const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'public'
-        ? 'Public Global Stellar Network ; September 2015'
-        : 'Test SDF Network ; September 2015';
-
-      // Sign transaction
-      const signedXdr = await freighter.signTransaction(xdr, {
-        networkPassphrase,
-      });
 
       // 3. Confirm payment
       setState('confirming');
