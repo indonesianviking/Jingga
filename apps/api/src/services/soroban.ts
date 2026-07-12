@@ -246,10 +246,9 @@ export async function buildSorobanTransaction(
           if (diagnosticEvents.length > 0) {
             console.error(`[Soroban] ${diagnosticEvents.length} diagnostic event(s) emitted`);
           }
-          return {
-            success: false,
-            error: `Contract call failed: ${simulation.error}`,
-          };
+          console.warn(`[Soroban] Both simulations failed — falling back to prepareTransaction without simulation`);
+          // Reset simulation so we fall through to prepareTransaction below
+          simulation = null as any;
         }
 
         console.log(`[Soroban] Simulation succeeded with deployer account`);
