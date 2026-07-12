@@ -14,7 +14,6 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
 import type { WebsocketProvider } from 'y-websocket';
 import { common, createLowlight } from 'lowlight';
@@ -156,15 +155,12 @@ export default function JinggaEditor({
       TableHeader,
       // Slash Commands
       SlashCommandExtension,
-      // Collaboration (real-time co-editing)
+      // Collaboration (real-time co-editing via Yjs)
+      // (Cursor overlay is handled by a separate component via Yjs awareness)
       ...(collaboration
         ? [
             Collaboration.configure({
               document: collaboration.ydoc,
-            }),
-            CollaborationCursor.configure({
-              provider: collaboration.provider as any,
-              user: collaboration.user,
             }),
           ]
         : []),

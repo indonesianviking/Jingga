@@ -9,6 +9,7 @@ import { Layout } from '@/components/layout/Layout';
 import JinggaEditor from '@/components/editor/JinggaEditor';
 import { apiRequest } from '@/lib/api';
 import { RoomUsers } from '@/components/editor/RoomUsers';
+import { CursorOverlay } from '@/components/editor/CursorOverlay';
 
 interface DraftData {
   id?: string;
@@ -433,6 +434,17 @@ export default function EditorPage() {
           </div>
         </div>
       </div>
+
+      {/* Remote cursor overlay — renders above all content */}
+      {providerRef.current && walletAddress && (
+        <CursorOverlay
+          provider={providerRef.current}
+          currentUser={{
+            name: truncateAddress(walletAddress, 6),
+            color: userColor,
+          }}
+        />
+      )}
     </Layout>
   );
 }
