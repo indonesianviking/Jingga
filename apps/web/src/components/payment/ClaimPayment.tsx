@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
+import { signTransaction, waitForFreighter } from '@/lib/freighter';
 
 type ClaimState =
   | 'idle'
@@ -49,12 +50,12 @@ export function ClaimPayment({
       : 'Test SDF Network ; September 2015';
   };
 
-  const signTransaction = async (xdr: string): Promise<string> => {
-    if (typeof window === 'undefined' || !(window as any).freighter) {
-      throw new Error('Freighter wallet not found. Please install Freighter extension.');
+  const signWithFreighter = async (xdr: string): Promise<string> => {
+    const available = await waitForFreighter(5000);
+    if (!available) {
+      throw new Error('Freighter wallet not detected. Please make sure the Freighter extension is installed and unlocked.');
     }
-    const freighter = (window as any).freighter;
-    return await freighter.signTransaction(xdr, { networkPassphrase: getNetworkPassphrase() });
+    return await signTransaction(xdr, getNetworkPassphrase());
   };
 
   const apiRequest = async (url: string, options: RequestInit = {}) => {
@@ -86,7 +87,7 @@ export function ClaimPayment({
 
       // Step 2: Sign with Freighter
       setState('signing_create');
-      const signedXdr = await signTransaction(xdr);
+      const signedXdr = await signWithFreighter(xdr);
 
       // Step 3: Submit claimable balance
       setState('submitting_create');
@@ -107,7 +108,7 @@ export function ClaimPayment({
 
       // Step 5: Sign claim with Freighter
       setState('signing_claim');
-      const signedClaimXdr = await signTransaction(claimData.xdr);
+      const signedClaimXdr = await signWithFreighter(claimData.xdr);
 
       // Step 6: Submit claim
       setState('submitting_claim');

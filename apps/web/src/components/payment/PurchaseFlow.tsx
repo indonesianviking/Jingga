@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
+import { signTransaction, waitForFreighter } from '@/lib/freighter';
 
 type PurchaseState =
   | 'idle'
@@ -74,19 +75,17 @@ export function PurchaseFlow({
         // Freighter flow: user signs with their wallet extension
         setState('signing');
 
-        if (typeof window === 'undefined' || !(window as any).freighter) {
-          throw new Error('Freighter wallet not found. Please install Freighter extension.');
+        // Wait for Freighter extension to inject API (up to 5s)
+        const available = await waitForFreighter(5000);
+        if (!available) {
+          throw new Error('Freighter wallet not detected. Please make sure the Freighter extension is installed and unlocked.');
         }
-
-        const freighter = (window as any).freighter;
 
         const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'public'
           ? 'Public Global Stellar Network ; September 2015'
           : 'Test SDF Network ; September 2015';
 
-        signedXdr = await freighter.signTransaction(xdr, {
-          networkPassphrase,
-        });
+        signedXdr = await signTransaction(xdr, networkPassphrase);
       }
 
       // 3. Confirm payment

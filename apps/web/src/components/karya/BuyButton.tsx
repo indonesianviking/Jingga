@@ -7,6 +7,7 @@ import { FileAccess } from '@/components/payment/FileAccess';
 import { PaymentMethodSelector, PaymentMethod } from '@/components/payment/PaymentMethodSelector';
 import { CurrencyConverter } from '@/components/payment/CurrencyConverter';
 import { Spinner } from '@/components/ui/Spinner';
+import { signTransaction, waitForFreighter } from '@/lib/freighter';
 
 interface BuyButtonProps {
   karyaId: string;
@@ -209,14 +210,12 @@ function PathPaymentFlow({
 
       const { xdr, quote } = await initRes.json();
 
-      // 4. Sign with Freighter
-      if (typeof window === 'undefined' || !(window as any).freighter) {
-        throw new Error('Freighter wallet not found');
+      // 4. Sign with Freighter via lib/freighter
+      const available = await waitForFreighter(5000);
+      if (!available) {
+        throw new Error('Freighter wallet not detected. Please make sure the Freighter extension is installed and unlocked.');
       }
-      const freighter = (window as any).freighter;
-      const signedXdr = await freighter.signTransaction(xdr, {
-        networkPassphrase: getNetworkPassphrase(),
-      });
+      const signedXdr = await signTransaction(xdr, getNetworkPassphrase());
 
       // 5. Confirm path payment
       setState('confirming');
