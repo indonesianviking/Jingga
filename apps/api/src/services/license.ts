@@ -508,14 +508,13 @@ export async function getLicenseDetails(licenseId: string): Promise<LicenseDetai
 
   const { data: license } = await supabaseAdmin
     .from('licenses')
-    .select('*, karya!inner(id, judul, issuer_wallet), users!original_author_wallet(nama)')
+    .select('*, karya!inner(id, judul, issuer_wallet)')
     .eq('id', licenseId)
     .single();
 
   if (!license) return null;
 
   const karya = license.karya as any;
-  const author = license.users as any;
 
   // Get resale stats
   const { data: resales } = await supabaseAdmin
@@ -533,7 +532,7 @@ export async function getLicenseDetails(licenseId: string): Promise<LicenseDetai
     karya_judul: karya?.judul || 'Unknown',
     purchaser_wallet: license.purchaser_wallet,
     original_author_wallet: license.original_author_wallet,
-    original_author_name: author?.nama || 'Unknown Author',
+    original_author_name: 'Author',
     license_type: license.license_type,
     territory: license.territory,
     duration: license.duration,
@@ -559,7 +558,7 @@ export async function getKaryaLicenses(karyaId: string): Promise<{
 
   const { data: licenses } = await supabaseAdmin
     .from('licenses')
-    .select('*, users!original_author_wallet(nama)')
+    .select('*')
     .eq('karya_id', karyaId)
     .order('issued_at', { ascending: false });
 
@@ -569,8 +568,6 @@ export async function getKaryaLicenses(karyaId: string): Promise<{
 
   const licenseDetails: LicenseDetail[] = await Promise.all(
     licenses.map(async (license: any) => {
-      const author = license.users as any;
-
       const { data: resales } = await supabaseAdmin!
         .from('resale_transactions')
         .select('sale_price')
@@ -583,7 +580,7 @@ export async function getKaryaLicenses(karyaId: string): Promise<{
         karya_judul: '', // Will be filled by caller
         purchaser_wallet: license.purchaser_wallet,
         original_author_wallet: license.original_author_wallet,
-        original_author_name: author?.nama || 'Unknown Author',
+        original_author_name: 'Author',
         license_type: license.license_type,
         territory: license.territory,
         duration: license.duration,

@@ -56,8 +56,16 @@ async function getRpcServer(): Promise<any> {
 // SCVal Helpers
 // ============================================================
 
+/**
+ * Create an ScVal symbol, truncating to 32 bytes max.
+ * UUIDs (36 chars with dashes) need dashes stripped to fit.
+ */
 function symbolVal(name: string): StellarSdk.xdr.ScVal {
-  return StellarSdk.nativeToScVal(name, { type: 'symbol' });
+  // Strip dashes from UUIDs to reduce 36 → 32 chars
+  const cleaned = name.replace(/-/g, '');
+  // Truncate if still over 32 bytes
+  const truncated = cleaned.length > 32 ? cleaned.slice(0, 32) : cleaned;
+  return StellarSdk.nativeToScVal(truncated, { type: 'symbol' });
 }
 
 function addressVal(publicKey: string): StellarSdk.xdr.ScVal {
