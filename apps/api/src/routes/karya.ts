@@ -2,14 +2,14 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { supabaseAdmin } from '../lib/supabase';
-import { uploadToIPFS } from '../lib/ipfs';
+import { getServer, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
+import { uploadToIPFS, getGatewayUrl } from '../lib/ipfs';
 import { validateFile, validateCover } from '../utils/fileValidation';
 import { generateAssetCode } from '../services/assetCode';
 import { createKaryaSchema, updateKaryaSchema } from '../schemas/karya';
 import { KARYA_ERRORS } from '../errors/KaryaError';
 import { verifyAuthorship } from '../services/verification';
 import { mintKaryaAsset, buildMintTransaction } from '../services/minting';
-import { getGatewayUrl } from '../lib/ipfs';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -194,10 +194,8 @@ router.post('/:id/publish', requireAuth, async (req: AuthRequest, res: Response)
         const signedXdr = req.body.signed_xdr;
         if (signedXdr) {
           // Submit externally signed transaction
-          const stellar = await import('@stellar/stellar-sdk');
-          const { getServer, getNetworkPassphrase } = await import('../lib/stellar');
           const server = getServer();
-          const transaction = stellar.TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+          const transaction = transactionFromXDR(signedXdr, getNetworkPassphrase());
           const result = await server.submitTransaction(transaction);
           stellarTxHash = result.hash;
         }

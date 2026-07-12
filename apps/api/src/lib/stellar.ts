@@ -70,6 +70,19 @@ export function getContractAdminPublicKey(): string {
   return process.env.CONTRACT_DEPLOYER_PUBLIC_KEY || 'GDEB5U56S3WIT3IFIKWTQ2UZPWOLR3W22QHBEV3I4PHBFOHH2BUVYRJH';
 }
 
+/**
+ * Deserialize a signed transaction from a base64 XDR string.
+ * 
+ * NOTE: TransactionBuilder.fromXDR() is NOT the correct API in Stellar SDK v12.
+ * It throws "envelope.switch is not a function" due to internal XDR union changes.
+ * The correct approach is to decode the envelope via xdr.TransactionEnvelope.fromXDR()
+ * and then wrap it in a new Transaction() object.
+ */
+export function transactionFromXDR(xdrBase64: string, networkPassphrase: string): StellarSdk.Transaction {
+  const envelope = StellarSdk.xdr.TransactionEnvelope.fromXDR(xdrBase64, 'base64');
+  return new StellarSdk.Transaction(envelope, networkPassphrase);
+}
+
 /** Get all contract config as an object */
 export function getContractConfig() {
   return {

@@ -1,5 +1,5 @@
 import * as Stellar from '@stellar/stellar-sdk';
-import { getServer, getNetworkPassphrase } from '../lib/stellar';
+import { getServer, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
 import { supabaseAdmin } from '../lib/supabase';
 import { getSignedUrl } from '../lib/ipfs';
 
@@ -123,7 +123,7 @@ export async function submitClaimableBalance(
   // 1. Deserialize and submit transaction
   let transaction;
   try {
-    transaction = Stellar.TransactionBuilder.fromXDR(
+    transaction = transactionFromXDR(
       signedXdr,
       getNetworkPassphrase()
     );
@@ -243,7 +243,7 @@ export async function submitClaim(
   // 1. Deserialize and submit transaction
   let transaction;
   try {
-    transaction = Stellar.TransactionBuilder.fromXDR(
+    transaction = transactionFromXDR(
       signedXdr,
       getNetworkPassphrase()
     );

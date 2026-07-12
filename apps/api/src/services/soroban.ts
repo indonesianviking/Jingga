@@ -14,6 +14,7 @@ import {
   getNetworkPassphrase,
   getRoyaltySplitContractId,
   getLicenseManagerContractId,
+  transactionFromXDR,
 } from '../lib/stellar';
 
 // ============================================================
@@ -606,7 +607,7 @@ export async function submitSignedSorobanTx(
     const rpcServer = await getRpcServer();
 
     // Reconstruct transaction from XDR
-    const transaction = StellarSdk.TransactionBuilder.fromXDR(
+    const transaction = transactionFromXDR(
       signedXdr,
       getNetworkPassphrase(),
     );

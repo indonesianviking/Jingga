@@ -1,5 +1,5 @@
 import * as Stellar from '@stellar/stellar-sdk';
-import { getServer, getNetworkPassphrase } from '../lib/stellar';
+import { getServer, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
 import { supabaseAdmin } from '../lib/supabase';
 import { getSignedUrl } from '../lib/ipfs';
 
@@ -132,10 +132,7 @@ export async function confirmPayment(
   // 1. Deserialize and submit transaction
   let transaction;
   try {
-    transaction = Stellar.TransactionBuilder.fromXDR(
-      signedXdr,
-      getNetworkPassphrase()
-    );
+    transaction = transactionFromXDR(signedXdr, getNetworkPassphrase());
   } catch (error) {
     console.error('[Payment] fromXDR deserialization error:', error);
     console.error('[Payment] Network passphrase used:', getNetworkPassphrase());

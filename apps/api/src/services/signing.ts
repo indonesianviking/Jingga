@@ -1,7 +1,7 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { supabaseAdmin } from '../lib/supabase';
 import { decryptPrivateKey } from '../lib/crypto';
-import { fundTestnetAccount } from '../lib/stellar';
+import { fundTestnetAccount, transactionFromXDR } from '../lib/stellar';
 
 export async function signTransactionForUser(
   userId: string,
@@ -29,7 +29,7 @@ export async function signTransactionForUser(
   );
 
   const keypair = StellarSdk.Keypair.fromSecret(privateKey);
-  const transaction = StellarSdk.TransactionBuilder.fromXDR(
+  const transaction = transactionFromXDR(
     transactionXdr,
     StellarSdk.Networks.TESTNET
   );

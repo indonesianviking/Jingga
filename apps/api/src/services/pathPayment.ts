@@ -1,5 +1,5 @@
 import * as Stellar from '@stellar/stellar-sdk';
-import { getServer, getNetworkPassphrase, getStellarExpertTxUrl } from '../lib/stellar';
+import { getServer, getNetworkPassphrase, getStellarExpertTxUrl, transactionFromXDR } from '../lib/stellar';
 import { supabaseAdmin } from '../lib/supabase';
 
 // Stablecoins supported for path payment (lazy-loaded — tidak crash server saat startup)
@@ -230,7 +230,7 @@ export async function confirmPathPayment(
   // 1. Submit signed transaction
   let transaction;
   try {
-    transaction = Stellar.TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+    transaction = transactionFromXDR(signedXdr, getNetworkPassphrase());
   } catch {
     throw new PathPaymentError('TX_FAILED');
   }

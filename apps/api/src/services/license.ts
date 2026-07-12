@@ -1,5 +1,5 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
-import { getServer, getNetworkPassphrase } from '../lib/stellar';
+import { getServer, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
 import { supabaseAdmin } from '../lib/supabase';
 import { buildIssueLicenseXdr } from './soroban';
 
@@ -207,7 +207,7 @@ export async function confirmLicensePurchase(
   // 1. Submit transaction to Stellar
   let transaction;
   try {
-    transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+    transaction = transactionFromXDR(signedXdr, getNetworkPassphrase());
   } catch {
     throw new LicenseError('TX_FAILED');
   }
@@ -422,7 +422,7 @@ export async function confirmResale(
   // 1. Submit transaction
   let transaction;
   try {
-    transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+    transaction = transactionFromXDR(signedXdr, getNetworkPassphrase());
   } catch {
     throw new LicenseError('TX_FAILED');
   }

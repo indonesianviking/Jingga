@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { supabaseAdmin } from '../lib/supabase';
-import { getServer, getAccountBalance, fundTestnetAccount, getStellarExpertAccountUrl } from '../lib/stellar';
+import { getServer, getAccountBalance, fundTestnetAccount, getStellarExpertAccountUrl, getNetworkPassphrase, transactionFromXDR } from '../lib/stellar';
 import { mintKaryaAsset, buildMintTransaction } from '../services/minting';
 import { verifyAuthorship } from '../services/verification';
 import { decryptPrivateKey } from '../lib/crypto';
@@ -54,10 +54,9 @@ router.post('/karya/:id/mint', requireAuth, async (req: AuthRequest, res: Respon
     if (signedXdr) {
       // Frontend signed the transaction (Freighter)
       const server = getServer();
-      const StellarSdk = await import('@stellar/stellar-sdk');
-      const transaction = StellarSdk.TransactionBuilder.fromXDR(
+      const transaction = transactionFromXDR(
         signedXdr,
-        StellarSdk.Networks.TESTNET
+        getNetworkPassphrase()
       );
       const result = await server.submitTransaction(transaction);
 
