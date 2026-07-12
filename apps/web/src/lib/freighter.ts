@@ -161,28 +161,52 @@ export async function signMessage(message: string): Promise<string | null> {
 }
 
 /**
+ * Normalize the result from Freighter's signTransaction.
+ * Freighter v6+ returns { signedTxXdr: string } while older versions return a plain string.
+ */
+function normalizeSignedXdr(result: unknown): string {
+  if (typeof result === 'string') return result;
+  if (result && typeof result === 'object') {
+    // Freighter v6+ format: { signedTxXdr: "AAAA..." }
+    const obj = result as Record<string, unknown>;
+    if (typeof obj.signedTxXdr === 'string') return obj.signedTxXdr;
+    if (typeof obj.signedXdr === 'string') return obj.signedXdr;
+    // Some older v6 builds return { tx: { toEnvelope()... } } or similar — grab first string value
+    const strValue = Object.values(obj).find((v): v is string => typeof v === 'string');
+    if (strValue) return strValue;
+  }
+  throw new Error('Freighter returned an unrecognized transaction format');
+}
+
+/**
  * Sign a transaction XDR with Freighter wallet.
  * 
  * Tries npm package first, falls back to window.freighterApi or window.freighter.
  * Freighter v6+ expects the second argument as an options object: { networkPassphrase }.
+ * Normalizes the return value to always be a plain signed XDR string.
  */
 export async function signTransaction(xdr: string, network?: string): Promise<string> {
   const opts = network ? { networkPassphrase: network } : undefined;
 
+  let result: unknown;
+
   // 1. Try npm package
   const api = await getFreighterApi();
   if (api && typeof api.signTransaction === 'function') {
-    return await api.signTransaction(xdr, opts);
+    result = await api.signTransaction(xdr, opts);
+    return normalizeSignedXdr(result);
   }
 
   // 2. Try window.freighterApi (Freighter v6+ direct injection)
   if (typeof (window as any).freighterApi?.signTransaction === 'function') {
-    return await (window as any).freighterApi.signTransaction(xdr, opts);
+    result = await (window as any).freighterApi.signTransaction(xdr, opts);
+    return normalizeSignedXdr(result);
   }
 
   // 3. Try window.freighter (legacy injection)
   if (typeof (window as any).freighter?.signTransaction === 'function') {
-    return await (window as any).freighter.signTransaction(xdr, opts);
+    result = await (window as any).freighter.signTransaction(xdr, opts);
+    return normalizeSignedXdr(result);
   }
 
   throw new Error('Freighter is not installed or not responding');
