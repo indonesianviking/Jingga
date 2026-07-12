@@ -192,6 +192,40 @@ router.get('/balance/:wallet', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/v1/stellar/tx-status/:hash — Check Soroban transaction status
+// Used by frontend to poll pending transactions after refresh
+router.get('/tx-status/:hash', async (req: Request, res: Response) => {
+  try {
+    const { hash } = req.params;
+
+    if (!hash || hash.length < 10) {
+      res.status(400).json({ error: 'Invalid transaction hash' });
+      return;
+    }
+
+    const rpcModule = await import('@stellar/stellar-sdk/rpc');
+    const rpcServer = new rpcModule.Server(
+      process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org'
+    );
+
+    const result = await rpcServer.getTransaction(hash);
+
+    res.json({
+      tx_hash: hash,
+      status: result.status,
+      explorer_url: getStellarExpertTxUrl(hash),
+    });
+  } catch (error: any) {
+    console.error('[Stellar] Tx status error:', error);
+    // NOT_FOUND or error — return status as not_found so frontend can retry
+    res.json({
+      tx_hash: req.params.hash,
+      status: 'not_found',
+      explorer_url: getStellarExpertTxUrl(req.params.hash),
+    });
+  }
+});
+
 // POST /api/v1/stellar/fund/:wallet — Fund testnet account
 router.post('/fund/:wallet', async (req: Request, res: Response) => {
   try {

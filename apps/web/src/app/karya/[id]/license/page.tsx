@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout/Layout';
 import { Spinner } from '@/components/ui/Spinner';
@@ -1131,6 +1131,13 @@ function ResellModal({
 // ============================================================
 // On-Chain Sign Button Component
 // ============================================================
+//
+// Saves transaction state (txHash, status) to sessionStorage so it
+// persists across page refreshes. Auto-polls pending transactions
+// and displays live status: SUCCESS / PENDING / ERROR.
+// ============================================================
+
+const STORAGE_KEY_PREFIX = 'jingga_license_tx_';
 
 function OnChainSignButton({
   licenseId,
@@ -1139,14 +1146,144 @@ function OnChainSignButton({
   licenseId: string;
   networkPassphrase: string;
 }) {
-  const [signState, setSignState] = useState<'idle' | 'fetching' | 'signing' | 'submitting' | 'success' | 'error'>('idle');
+  const storageKey = `${STORAGE_KEY_PREFIX}${licenseId}`;
+  const pollingRef = useRef<number | null>(null);
+  const pollingCountRef = useRef(0);
+  const MAX_POLL_ATTEMPTS = 36; // ~6 minutes (36 × 10s)
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current !== null) {
+        clearTimeout(pollingRef.current);
+      }
+    };
+  }, []);
+
+  // Restore persisted state on mount
+  const getPersisted = (): {
+    txHash: string;
+    status: 'pending' | 'success' | 'failed' | 'not_found' | '';
+    timestamp: number;
+  } | null => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  };
+
+  const [signState, setSignState] = useState<
+    'idle' | 'fetching' | 'signing' | 'submitting' | 'success' | 'error'
+  >('idle');
   const [signError, setSignError] = useState('');
   const [txHash, setTxHash] = useState('');
+  const [txStatus, setTxStatus] = useState<
+    'pending' | 'success' | 'failed' | 'not_found' | ''
+  >('');
+  const [checkingStatus, setCheckingStatus] = useState(false);
+
+  // Persist to localStorage
+  const persistTx = (
+    hash: string,
+    status: 'pending' | 'success' | 'failed' | 'not_found' | '',
+  ) => {
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ txHash: hash, status, timestamp: Date.now() }),
+      );
+    } catch {}
+  };
+
+  // Clear persisted state
+  const clearPersisted = () => {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {}
+  };
+
+  // Poll transaction status from backend (inline in useEffect to avoid stale closure)
+  const startPolling = useCallback((hash: string) => {
+    pollingCountRef.current = 0;
+    pollingRef.current = null;
+
+    const poll = async () => {
+      // Max retry check
+      if (pollingCountRef.current >= MAX_POLL_ATTEMPTS) {
+        setCheckingStatus(false);
+        setSignState('error');
+        setSignError(
+          'Transaction is taking longer than expected. Check Stellar Explorer for status.',
+        );
+        return;
+      }
+
+      pollingCountRef.current++;
+      setCheckingStatus(true);
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/v1/stellar/tx-status/${hash}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setTxStatus(data.status);
+          persistTx(hash, data.status);
+
+          if (data.status === 'success') {
+            setSignState('success');
+            setCheckingStatus(false);
+            return;
+          }
+
+          if (data.status === 'failed') {
+            setSignState('error');
+            setSignError('Transaction failed on-chain');
+            setCheckingStatus(false);
+            return;
+          }
+        }
+      } catch {
+        // Network error — will retry
+      }
+
+      setCheckingStatus(false);
+      // Poll again in 10 seconds
+      pollingRef.current = window.setTimeout(poll, 10000);
+    };
+
+    poll();
+  }, []);
+
+  // Restore persisted state on mount
+  useEffect(() => {
+    const persisted = getPersisted();
+    if (persisted && persisted.txHash) {
+      setTxHash(persisted.txHash);
+      setTxStatus(persisted.status);
+
+      if (persisted.status === 'success') {
+        setSignState('success');
+      } else if (
+        persisted.status === 'pending' ||
+        persisted.status === 'not_found'
+      ) {
+        setSignState('submitting');
+        startPolling(persisted.txHash);
+      } else if (persisted.status === 'failed') {
+        setSignState('error');
+        setSignError('Transaction failed on-chain');
+      }
+    }
+  }, [licenseId, startPolling]);
 
   const handleSign = async () => {
     setSignState('fetching');
     setSignError('');
     setTxHash('');
+    setTxStatus('');
+    clearPersisted();
 
     try {
       const token = localStorage.getItem('jingga_auth_token');
@@ -1155,7 +1292,9 @@ function OnChainSignButton({
       const xdrRes = await fetch(
         `${API_BASE}/api/v1/licenses/${licenseId}/xdr`,
         {
-          headers: token ? { Authorization: `Bearer ${token}` } : {} as any,
+          headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : ({} as any),
         },
       );
 
@@ -1166,7 +1305,9 @@ function OnChainSignButton({
 
       const xdrData = await xdrRes.json();
       if (!xdrData.success) {
-        throw new Error(xdrData.error || 'Failed to prepare transaction — contract error');
+        throw new Error(
+          xdrData.error || 'Failed to prepare transaction — contract error',
+        );
       }
       if (!xdrData.xdr) {
         throw new Error('No XDR received from server');
@@ -1191,13 +1332,28 @@ function OnChainSignButton({
         },
       );
 
+      const result = await submitRes.json();
+
       if (!submitRes.ok) {
-        const err = await submitRes.json();
-        throw new Error(err.error || 'Failed to submit transaction');
+        // Backend returned error — but maybe it has txHash?
+        // (Our submitSignedSorobanTx returns txHash even on failure)
+        const txHashFromError = result.tx_hash;
+        if (txHashFromError) {
+          setTxHash(txHashFromError);
+          setTxStatus('pending');
+          persistTx(txHashFromError, 'pending');
+          // Keep showing 'submitting' while we check status
+          startPolling(txHashFromError);
+          return;
+        }
+        throw new Error(
+          result.error || 'Failed to submit transaction',
+        );
       }
 
-      const result = await submitRes.json();
       setTxHash(result.tx_hash);
+      setTxStatus('success');
+      persistTx(result.tx_hash, 'success');
       setSignState('success');
     } catch (err: any) {
       console.error('[OnChainSign] Error:', err);
@@ -1206,28 +1362,129 @@ function OnChainSignButton({
     }
   };
 
-  if (signState === 'success') {
+  // ============================================================
+  // Render: Success
+  // ============================================================
+  if (signState === 'success' && txHash) {
     return (
       <div className="mt-md pt-md border-t border-hairline">
-        <div className="flex items-center gap-xs text-semantic-success mb-xs">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-body-sm font-medium">Registered on Stellar</span>
+        <div className="bg-semantic-success/5 border border-semantic-success/20 p-md">
+          <div className="flex items-center gap-sm mb-sm">
+            <div className="w-6 h-6 bg-semantic-success/10 flex items-center justify-center">
+              <svg
+                className="w-4 h-4 text-semantic-success"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <span className="text-body-sm font-medium text-semantic-success">
+              Signed on Stellar
+            </span>
+            <span className="ml-auto inline-flex items-center gap-xs text-caption bg-semantic-success/10 text-semantic-success px-xs py-xxs">
+              <span className="w-1.5 h-1.5 rounded-full bg-semantic-success" />
+              Confirmed
+            </span>
+          </div>
+          <a
+            href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-body-sm text-primary hover:underline flex items-center gap-xs"
+          >
+            <span className="font-mono text-xs">
+              {txHash.slice(0, 8)}...{txHash.slice(-6)}
+            </span>
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+          <p className="text-caption text-ink-subtle mt-xs">
+            This license is immutably recorded on the Stellar blockchain.
+          </p>
         </div>
-        <a
-          href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-body-sm text-primary hover:underline"
-        >
-          View transaction &rarr;
-        </a>
       </div>
     );
   }
 
-  if (signState === 'fetching' || signState === 'signing' || signState === 'submitting') {
+  // ============================================================
+  // Render: Pending / Checking
+  // ============================================================
+  if (
+    signState === 'submitting' &&
+    txHash &&
+    (txStatus === 'pending' || txStatus === 'not_found')
+  ) {
+    return (
+      <div className="mt-md pt-md border-t border-hairline">
+        <div className="bg-semantic-warning/5 border border-semantic-warning/20 p-md">
+          <div className="flex items-center gap-sm mb-sm">
+            <Spinner size="sm" />
+            <span className="text-body-sm font-medium text-ink">
+              Transaction Pending
+            </span>
+            <span className="ml-auto inline-flex items-center gap-xs text-caption bg-semantic-warning/10 text-ink px-xs py-xxs">
+              <span className="w-1.5 h-1.5 rounded-full bg-semantic-warning animate-pulse" />
+              {checkingStatus ? 'Checking...' : 'Pending'}
+            </span>
+          </div>
+          <p className="text-body-sm text-ink-muted mb-sm">
+            Waiting for the Stellar network to confirm your transaction.
+            This usually takes a few seconds but can take up to a minute.
+          </p>
+          <a
+            href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-body-sm text-primary hover:underline flex items-center gap-xs"
+          >
+            <span className="font-mono text-xs">
+              {txHash.slice(0, 8)}...{txHash.slice(-6)}
+            </span>
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // Render: Loading (fetching/signing/submitting)
+  // ============================================================
+  if (
+    signState === 'fetching' ||
+    signState === 'signing' ||
+    signState === 'submitting'
+  ) {
     return (
       <div className="mt-md pt-md border-t border-hairline">
         <div className="flex items-center gap-sm">
@@ -1242,14 +1499,59 @@ function OnChainSignButton({
     );
   }
 
+  // ============================================================
+  // Render: Default (idle / error)
+  // ============================================================
   return (
     <div className="mt-md pt-md border-t border-hairline">
       <p className="text-body-sm text-ink-muted mb-sm">
-        Sign this license on the Stellar blockchain to create an immutable record.
+        Sign this license on the Stellar blockchain to create an immutable
+        record.
       </p>
 
+      {/* Error with retry */}
       {signState === 'error' && (
-        <p className="text-body-sm text-semantic-error mb-sm">{signError}</p>
+        <div className="bg-semantic-error/5 border border-semantic-error/20 p-md mb-md">
+          <div className="flex items-center gap-sm">
+            <div className="w-5 h-5 bg-semantic-error/10 flex items-center justify-center">
+              <svg
+                className="w-3 h-3 text-semantic-error"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <span className="text-body-sm text-semantic-error">
+              {signError}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Error with txHash — transaction might still go through */}
+      {txHash && (txStatus === 'failed' || txStatus === '') && (
+        <div className="bg-semantic-error/5 border border-semantic-error/20 p-md mb-md">
+          <div className="flex items-center gap-sm mb-xs">
+            <span className="text-body-sm text-semantic-error">
+              Transaction may have failed
+            </span>
+          </div>
+          <a
+            href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-body-sm text-primary hover:underline font-mono text-xs"
+          >
+            {txHash.slice(0, 8)}...{txHash.slice(-6)} &rarr;
+          </a>
+        </div>
       )}
 
       <button
