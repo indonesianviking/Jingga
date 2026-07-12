@@ -121,18 +121,26 @@ function recipientScVal(
  * In soroban-sdk v20+, `#[contracttype]` unit enum variants serialize as
  * `ScVal::Vec([ScVal::Symbol(variant_name)])`, NOT as a naked Symbol.
  *
+ * IMPORTANT: `nativeToScVal([variant])` produces Vec[String], NOT Vec[Symbol]!
+ * The inner string auto-detects as `scvString`, but the contract expects
+ * `scvSymbol`. Use explicit `scvVec([scvSymbol(...)])` instead.
+ *
  * See: https://docs.rs/soroban-sdk/latest/soroban_sdk/attr.contracttype.html
  */
 function licenseTypeVal(type: 'exclusive' | 'non-exclusive'): StellarSdk.xdr.ScVal {
   const variant = type === 'exclusive' ? 'Exclusive' : 'NonExclusive';
-  // nativeToScVal auto-detects arrays as Vec and strings as Symbol
-  return StellarSdk.nativeToScVal([variant]);
+  // Explicitly wrap Symbol in Vec — nativeToScVal produces String, not Symbol
+  return StellarSdk.xdr.ScVal.scvVec([
+    StellarSdk.xdr.ScVal.scvSymbol(variant),
+  ]);
 }
 
 /**
  * LicenseDuration enum: OneYear / FiveYears / Perpetual
  *
  * Same encoding: `Vec[Symbol(variant_name)]`
+ *
+ * IMPORTANT: Must use explicit scvSymbol, NOT nativeToScVal (which produces String).
  */
 function licenseDurationVal(duration: string): StellarSdk.xdr.ScVal {
   const map: Record<string, string> = {
@@ -142,7 +150,9 @@ function licenseDurationVal(duration: string): StellarSdk.xdr.ScVal {
     perpetual: 'Perpetual',
   };
   const variant = map[duration] || 'Perpetual';
-  return StellarSdk.nativeToScVal([variant]);
+  return StellarSdk.xdr.ScVal.scvVec([
+    StellarSdk.xdr.ScVal.scvSymbol(variant),
+  ]);
 }
 
 // ============================================================
