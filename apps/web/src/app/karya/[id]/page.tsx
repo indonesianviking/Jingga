@@ -139,6 +139,15 @@ export default function KaryaDetailPage() {
           </div>
         </div>
 
+        {/* File Preview / Spoiler — placed right after hero so buyers can preview before purchase */}
+        <div className="mb-xl">
+          <KaryaPreview
+            fileUrl={karya.file_url}
+            fileType={karya.file_type}
+            judul={karya.judul}
+          />
+        </div>
+
         {/* Description */}
         <div className="bg-canvas border border-hairline p-xl rounded-none mb-xl">
           <h2 className="text-card-title text-ink mb-md">About this work</h2>
@@ -159,15 +168,6 @@ export default function KaryaDetailPage() {
         {/* Proof of Authorship */}
         <div className="mb-xl">
           <KaryaProof proof={karya.proof} txHash={karya.stellar_tx_hash} />
-        </div>
-
-        {/* File Preview */}
-        <div className="mb-xl">
-          <KaryaPreview
-            fileUrl={karya.file_url}
-            fileType={karya.file_type}
-            judul={karya.judul}
-          />
         </div>
 
         {/* License Info Card */}
