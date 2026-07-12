@@ -26,23 +26,27 @@ export function Layout({ children }: LayoutProps) {
             <a href="/marketplace" className="text-ink-muted hover:text-primary transition-colors">
               Marketplace
             </a>
-            <a href="/dashboard" className="text-ink-muted hover:text-primary transition-colors relative">
-              Dashboard
-              {pendingCount > 0 && (
-                <span className="absolute -top-1.5 -right-3 bg-semantic-error text-white text-[10px] font-bold min-w-[16px] h-4 flex items-center justify-center px-1">
-                  {pendingCount > 99 ? '99+' : pendingCount}
-                </span>
-              )}
-            </a>
-            <a href="/editor" className="text-ink-muted hover:text-primary transition-colors">
-              Editor
-            </a>
-            <a href="/upload" className="text-ink-muted hover:text-primary transition-colors">
-              Upload
-            </a>
-            <a href="/reader" className="text-ink-muted hover:text-primary transition-colors">
-              My Collection
-            </a>
+            {isConnected && (
+              <>
+                <a href="/dashboard" className="text-ink-muted hover:text-primary transition-colors relative">
+                  Dashboard
+                  {pendingCount > 0 && (
+                    <span className="absolute -top-1.5 -right-3 bg-semantic-error text-white text-[10px] font-bold min-w-[16px] h-4 flex items-center justify-center px-1">
+                      {pendingCount > 99 ? '99+' : pendingCount}
+                    </span>
+                  )}
+                </a>
+                <a href="/editor" className="text-ink-muted hover:text-primary transition-colors">
+                  Editor
+                </a>
+                <a href="/upload" className="text-ink-muted hover:text-primary transition-colors">
+                  Upload
+                </a>
+                <a href="/reader" className="text-ink-muted hover:text-primary transition-colors">
+                  My Collection
+                </a>
+              </>
+            )}
           </div>
 
           {/* Wallet Connection */}

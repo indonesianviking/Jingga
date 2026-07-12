@@ -7,6 +7,7 @@ export const PAYMENT_ERRORS = {
   KARYA_NOT_FOUND: { code: 'KARYA_NOT_FOUND', message: 'Karya tidak ditemukan', status: 404 },
   CANNOT_BUY_OWN: { code: 'CANNOT_BUY_OWN', message: 'Tidak bisa membeli karya sendiri', status: 400 },
   ALREADY_PURCHASED: { code: 'ALREADY_PURCHASED', message: 'Sudah membeli karya ini', status: 400 },
+  ACCOUNT_NOT_FOUND: { code: 'ACCOUNT_NOT_FOUND', message: 'Wallet belum teraktivasi di Stellar network. Fund dulu via Dashboard > Fund Wallet atau https://friendbot.stellar.org?addr=WALLET_ADDRESS', status: 400 },
   INSUFFICIENT_BALANCE: { code: 'INSUFFICIENT_BALANCE', message: 'Saldo XLM tidak cukup', status: 400 },
   TX_FAILED: { code: 'TX_FAILED', message: 'Transaksi gagal di Stellar', status: 400 },
   TX_TIMEOUT: { code: 'TX_TIMEOUT', message: 'Transaksi expired, silakan coba lagi', status: 400 },
@@ -74,7 +75,11 @@ export async function initiatePayment(
   let buyerAccount;
   try {
     buyerAccount = await getServer().loadAccount(buyerWallet);
-  } catch (error) {
+  } catch (error: any) {
+    // Wallet not activated on Stellar testnet
+    if (error.name === 'NotFoundError' || error.constructor?.name === 'NotFoundError' || error.response?.status === 404) {
+      throw new PaymentError('ACCOUNT_NOT_FOUND');
+    }
     throw new PaymentError('TX_FAILED');
   }
 
