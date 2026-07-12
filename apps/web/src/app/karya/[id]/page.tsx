@@ -110,9 +110,9 @@ export default function KaryaDetailPage() {
     <Layout>
       <div className="mx-auto max-w-[1584px] py-xl px-lg">
         {/* Hero Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-md mb-xl items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-md mb-xl items-center">
           <div className="lg:col-span-2 flex justify-center">
-            <div className="w-full max-w-[280px]">
+            <div className="w-full max-w-xs">
               <KaryaCover
                 src={karya.cover_image_url}
                 alt={karya.judul}
