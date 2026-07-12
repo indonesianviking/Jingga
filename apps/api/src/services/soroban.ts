@@ -204,19 +204,62 @@ export async function buildSorobanTransaction(
       .build();
 
     // Step 2: Simulate via Soroban RPC untuk mendapatkan footprint + resource requirements
-    const simulation = await rpcServer.simulateTransaction(tx);
+    //
+    // Gunakan deployer account sebagai source untuk simulasi (dijamin punya dana),
+    // karena beberapa contract require_auth() bisa gagal disimulasi dengan source
+    // yang tidak punya cukup XLM. Setelah simulasi berhasil, hasilnya (footprint,
+    // resource fee) di-apply ke transaksi dengan source asli.
+    let simulation = await rpcServer.simulateTransaction(tx);
 
-    // Cek error simulasi — contract call itself failed
+    // Jika simulasi gagal dengan source asli, coba dengan deployer account
     if (simulation?.error) {
-      const diagnosticEvents = (simulation as any)?.events || [];
-      console.error(`[Soroban] Simulate error (${method}):`, simulation.error);
-      if (diagnosticEvents.length > 0) {
-        console.error(`[Soroban] ${diagnosticEvents.length} diagnostic event(s) emitted during simulation`);
+      console.warn(`[Soroban] Simulate error with original source (${method}):`, simulation.error);
+      const diagEvents = (simulation as any)?.events || [];
+      if (diagEvents.length > 0) {
+        console.warn(`[Soroban] ${diagEvents.length} diagnostic event(s) from original source simulation`);
       }
-      return {
-        success: false,
-        error: `Contract call failed: ${simulation.error}`,
-      };
+      console.warn(`[Soroban] Retrying with deployer account for simulation...`);
+
+      try {
+        const deployerPk = getContractAdminPublicKey();
+        const deployerAccount = await server.loadAccount(deployerPk);
+
+        const simTx = new StellarSdk.TransactionBuilder(deployerAccount, {
+          fee,
+          networkPassphrase: getNetworkPassphrase(),
+        })
+          .addOperation(
+            StellarSdk.Operation.invokeContractFunction({
+              contract: contractId,
+              function: method,
+              args,
+            }),
+          )
+          .setTimeout(300)
+          .build();
+
+        simulation = await rpcServer.simulateTransaction(simTx);
+
+        if (simulation?.error) {
+          const diagnosticEvents = (simulation as any)?.events || [];
+          console.error(`[Soroban] Simulate error with deployer (${method}):`, simulation.error);
+          if (diagnosticEvents.length > 0) {
+            console.error(`[Soroban] ${diagnosticEvents.length} diagnostic event(s) emitted`);
+          }
+          return {
+            success: false,
+            error: `Contract call failed: ${simulation.error}`,
+          };
+        }
+
+        console.log(`[Soroban] Simulation succeeded with deployer account`);
+      } catch (retryErr: any) {
+        console.error(`[Soroban] Retry simulation error (${method}):`, retryErr);
+        return {
+          success: false,
+          error: retryErr.message || 'Failed to simulate transaction',
+        };
+      }
     }
 
     // Step 3: Prepare transaction — set SorobanTransactionData (footprint, resource fee, etc.)
