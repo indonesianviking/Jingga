@@ -10,7 +10,6 @@ import { KaryaDetails } from '@/components/karya/KaryaDetails';
 import { KaryaCollaborators } from '@/components/karya/KaryaCollaborators';
 import { BuyButton } from '@/components/karya/BuyButton';
 import { LicenseInfoCard } from '@/components/karya/LicenseInfoCard';
-import { KaryaPreview } from '@/components/karya/KaryaPreview';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_BASE } from '@/lib/api';
@@ -141,15 +140,6 @@ export default function KaryaDetailPage() {
               />
             </div>
           </div>
-        </div>
-
-        {/* File Preview / Spoiler — placed right after hero so buyers can preview before purchase */}
-        <div className="mb-xl">
-          <KaryaPreview
-            fileUrl={karya.file_url}
-            fileType={karya.file_type}
-            judul={karya.judul}
-          />
         </div>
 
         {/* Description */}
