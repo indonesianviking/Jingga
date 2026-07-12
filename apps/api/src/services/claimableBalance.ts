@@ -276,7 +276,7 @@ export async function submitClaim(
   let expiresAt = '';
 
   if (balance) {
-    // 4. Record transaction
+    // 4. Record transaction (two-step pending→confirmed to avoid broken badge trigger)
     const { data: karya } = await supabaseAdmin
       .from('karya')
       .select('*')
@@ -290,10 +290,14 @@ export async function submitClaim(
         seller_wallet: karya.issuer_wallet,
         jumlah: karya.harga,
         stellar_tx_hash: result.hash,
-        status: 'confirmed',
+        status: 'pending',
         payment_method: 'claimable_balance',
-        confirmed_at: new Date().toISOString(),
       });
+
+      await supabaseAdmin
+        .from('transactions')
+        .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+        .eq('stellar_tx_hash', result.hash);
 
       // 5. Update karya stats
       await supabaseAdmin.rpc('increment_karya_sales', {

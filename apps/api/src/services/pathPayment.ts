@@ -254,7 +254,7 @@ export async function confirmPathPayment(
   // 3. Extract amounts from transaction operations
   const xlmReceived = karya.harga;
 
-  // 4. Record transaction in database
+  // 4. Record transaction in database (two-step pending→confirmed to avoid broken badge trigger)
   await supabaseAdmin.from('transactions').insert({
     karya_id: karyaId,
     buyer_wallet: buyerWallet,
@@ -262,10 +262,14 @@ export async function confirmPathPayment(
     jumlah: xlmReceived,
     payment_asset: sourceAsset,
     stellar_tx_hash: result.hash,
-    status: 'confirmed',
+    status: 'pending',
     payment_method: 'path_payment',
-    confirmed_at: new Date().toISOString(),
   });
+
+  await supabaseAdmin
+    .from('transactions')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('stellar_tx_hash', result.hash);
 
   // 5. Update karya stats
   await supabaseAdmin.rpc('increment_karya_sales', {

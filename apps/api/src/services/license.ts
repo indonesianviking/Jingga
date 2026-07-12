@@ -268,17 +268,21 @@ export async function confirmLicensePurchase(
     throw new LicenseError('DATABASE_ERROR');
   }
 
-  // 5. Record the license fee as a transaction
+  // 5. Record the license fee as a transaction (two-step pending→confirmed to avoid broken badge trigger)
   await supabaseAdmin.from('transactions').insert({
     karya_id: karyaId,
     buyer_wallet: purchaserWallet,
     seller_wallet: karya.issuer_wallet,
     jumlah: licenseFee,
     stellar_tx_hash: result.hash,
-    status: 'confirmed',
+    status: 'pending',
     payment_method: 'direct',
-    confirmed_at: new Date().toISOString(),
   });
+
+  await supabaseAdmin
+    .from('transactions')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('stellar_tx_hash', result.hash);
 
   // 6. Create royalty split for this license (for future resales) — skip if exists
   const { data: existingSplit } = await supabaseAdmin

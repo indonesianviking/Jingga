@@ -213,6 +213,10 @@ export async function confirmPayment(
   }
 
   // 3. Record in database
+  // NOTE: We insert as 'pending' first, then update to 'confirmed' to work around
+  // a broken trigger in migration 007_user_badges.sql that has a type mismatch
+  // (NEW.buyer_wallet TEXT used for user_id UUID). Once migration 008 is applied,
+  // this two-step approach still works fine.
   console.log('[Payment] Recording transaction in DB...');
   console.log('[Payment] Tx hash:', result.hash);
   console.log('[Payment] Buyer:', buyerWallet, 'Seller:', karya.issuer_wallet);
@@ -223,9 +227,8 @@ export async function confirmPayment(
     seller_wallet: karya.issuer_wallet,
     jumlah: karya.harga,
     stellar_tx_hash: result.hash,
-    status: 'confirmed',
+    status: 'pending',
     payment_method: 'direct',
-    confirmed_at: new Date().toISOString(),
   });
 
   if (insertError) {
@@ -237,7 +240,21 @@ export async function confirmPayment(
       throw new PaymentError('TX_FAILED');
     }
   } else {
-    console.log('[Payment] Transaction recorded successfully');
+    console.log('[Payment] Transaction recorded as pending, updating to confirmed...');
+    const { error: updateError } = await supabaseAdmin
+      .from('transactions')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+      })
+      .eq('stellar_tx_hash', result.hash);
+
+    if (updateError) {
+      console.error('[Payment] Status update error:', updateError);
+      // Non-fatal: transaction is recorded, status update failed but we can retry
+    } else {
+      console.log('[Payment] Transaction confirmed successfully');
+    }
   }
 
   // 4. Update karya stats (non-critical, ignore errors)
@@ -369,7 +386,7 @@ export async function verifyStellarPayment(
     throw new PaymentError('TX_FAILED');
   }
 
-  // 5. Record in database
+  // 5. Record in database (two-step: pending → confirmed to avoid broken badge trigger)
   console.log('[Payment] Verify: Transaction verified! Recording in DB...');
   const { error: insertError } = await supabaseAdmin.from('transactions').insert({
     karya_id: karyaId,
@@ -377,9 +394,8 @@ export async function verifyStellarPayment(
     seller_wallet: karya.issuer_wallet,
     jumlah: karya.harga,
     stellar_tx_hash: txHash,
-    status: 'confirmed',
+    status: 'pending',
     payment_method: 'direct',
-    confirmed_at: new Date().toISOString(),
   });
 
   if (insertError) {
@@ -391,7 +407,20 @@ export async function verifyStellarPayment(
       throw new PaymentError('TX_FAILED');
     }
   } else {
-    console.log('[Payment] Verify: Transaction recorded successfully!');
+    console.log('[Payment] Verify: Recorded as pending, updating to confirmed...');
+    const { error: updateError } = await supabaseAdmin
+      .from('transactions')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+      })
+      .eq('stellar_tx_hash', txHash);
+
+    if (updateError) {
+      console.error('[Payment] Verify: Status update error (non-fatal):', updateError);
+    } else {
+      console.log('[Payment] Verify: Transaction confirmed!');
+    }
   }
 
   // 6. Update stats (non-critical)
