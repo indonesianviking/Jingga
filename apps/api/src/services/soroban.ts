@@ -156,6 +156,43 @@ function licenseDurationVal(duration: string): StellarSdk.xdr.ScVal {
 }
 
 // ============================================================
+// Retry Helper for Transient Network Errors
+// ============================================================
+
+const RETRYABLE_ERROR_CODES = ['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN'];
+
+/**
+ * Wrap an async RPC call with retry logic for transient network errors.
+ * Uses exponential backoff: 1s, 2s, 4s (max 3 retries).
+ */
+async function withRetry(fn: () => Promise<any>, maxRetries = 3): Promise<any> {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastError = err;
+      const isRetryable =
+        RETRYABLE_ERROR_CODES.includes(err.code) ||
+        err.message?.includes('ETIMEDOUT') ||
+        err.message?.includes('timeout') ||
+        err.message?.includes('ECONNRESET') ||
+        err.message?.includes('socket hang up') ||
+        err?.cause?.code === 'ETIMEDOUT';
+
+      if (!isRetryable || attempt >= maxRetries) {
+        throw err;
+      }
+
+      const delay = Math.pow(2, attempt) * 1000;
+      console.warn(`[Soroban] RPC call failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastError;
+}
+
+// ============================================================
 // Core Contract Invocation
 // ============================================================
 
@@ -219,7 +256,7 @@ export async function buildSorobanTransaction(
     // karena beberapa contract require_auth() bisa gagal disimulasi dengan source
     // yang tidak punya cukup XLM. Setelah simulasi berhasil, hasilnya (footprint,
     // resource fee) di-apply ke transaksi dengan source asli.
-    let simulation = await rpcServer.simulateTransaction(tx);
+    let simulation = await withRetry(() => rpcServer.simulateTransaction(tx));
 
     // Jika simulasi gagal dengan source asli, coba dengan deployer account
     // Khusus untuk issue_license: original_author.require_auth() di contract
@@ -261,7 +298,7 @@ export async function buildSorobanTransaction(
           .build();
 
         console.warn(`[Soroban] Retrying simulation with deployer account (${method})...`);
-        const deployerSim = await rpcServer.simulateTransaction(simTx);
+        const deployerSim = await withRetry(() => rpcServer.simulateTransaction(simTx));
 
         if (deployerSim?.error) {
           console.error(`[Soroban] Deployer simulation also failed (${method}):`, deployerSim.error);
@@ -278,7 +315,7 @@ export async function buildSorobanTransaction(
         // simulation ke original transaction (author sebagai source).
         // Ini aman karena storage keys contract berdasarkan license_id + karya_id,
         // BUKAN original_author. Footprint-nya identik.
-        const preparedTx = await rpcServer.prepareTransaction(tx, deployerSim);
+        const preparedTx = await withRetry(() => rpcServer.prepareTransaction(tx, deployerSim));
         return { success: true, xdr: preparedTx.toXDR() };
       } catch (retryErr: any) {
         console.error(`[Soroban] Retry simulation error (${method}):`, retryErr);
@@ -290,7 +327,7 @@ export async function buildSorobanTransaction(
     }
 
     // Step 3: Prepare transaction — set SorobanTransactionData (footprint, resource fee, etc.)
-    const preparedTx = await rpcServer.prepareTransaction(tx, simulation);
+    const preparedTx = await withRetry(() => rpcServer.prepareTransaction(tx, simulation));
 
     return { success: true, xdr: preparedTx.toXDR() };
   } catch (error: any) {
@@ -328,7 +365,7 @@ export async function simulateSorobanCall(
       .setTimeout(300)
       .build();
 
-    const simulation = await rpcServer.simulateTransaction(tx);
+    const simulation = await withRetry(() => rpcServer.simulateTransaction(tx));
     // Extract the return value from simulation results
     const resultValue = simulation?.result?.retval;
 
@@ -386,10 +423,10 @@ export async function submitSorobanTransaction(
       .setTimeout(300)
       .build();
 
-    const preparedTx = await rpcServer.prepareTransaction(tx);
+    const preparedTx = await withRetry(() => rpcServer.prepareTransaction(tx));
     preparedTx.sign(keypair);
 
-    const result = await rpcServer.sendTransaction(preparedTx);
+    const result = await withRetry(() => rpcServer.sendTransaction(preparedTx));
     const txHash = result.hash;
 
     if (result.status === 'error') {
@@ -753,7 +790,7 @@ export async function submitSignedSorobanTx(
     );
 
     // Submit to Soroban RPC (do NOT block on polling — return immediately)
-    const result = await rpcServer.sendTransaction(transaction);
+    const result = await withRetry(() => rpcServer.sendTransaction(transaction));
     const txHash = result.hash;
 
     if (result.status === 'error') {
