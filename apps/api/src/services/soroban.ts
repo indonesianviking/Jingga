@@ -799,7 +799,7 @@ export async function submitSignedSorobanTx(
 
     // Return immediately — transaction is pending on-chain.
     // Frontend will poll via GET /api/v1/stellar/tx-status/:hash for final status.
-    console.log(`[Soroban] Transaction submitted: ${txHash} (status: ${result.status})`);
+    console.log(`[Soroban] Transaction submitted and accepted by network: ${txHash} (sendTransaction status: ${result.status} — frontend will poll for final confirmation)`);
     return {
       success: true,
       txHash,
