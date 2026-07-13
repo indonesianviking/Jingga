@@ -1335,26 +1335,31 @@ function OnChainSignButton({
       const result = await submitRes.json();
 
       if (!submitRes.ok) {
-        // Backend returned error — but maybe it has txHash?
-        // (Our submitSignedSorobanTx returns txHash even on failure)
-        const txHashFromError = result.tx_hash;
-        if (txHashFromError) {
-          setTxHash(txHashFromError);
-          setTxStatus('pending');
-          persistTx(txHashFromError, 'pending');
-          // Keep showing 'submitting' while we check status
-          startPolling(txHashFromError);
-          return;
-        }
+        // HTTP error (server error, not tx failure)
         throw new Error(
           result.error || 'Failed to submit transaction',
         );
       }
 
-      setTxHash(result.tx_hash);
-      setTxStatus('success');
-      persistTx(result.tx_hash, 'success');
-      setSignState('success');
+      // Backend returns success:true (confirmed immediately) OR
+      // success:false but with tx_hash (submitted, pending on-chain)
+      if (result.tx_hash) {
+        setTxHash(result.tx_hash);
+        if (result.status === 'submitted' && result.success) {
+          // Confirmed immediately — no polling needed
+          persistTx(result.tx_hash, 'success');
+          setTxStatus('success');
+          setSignState('success');
+        } else {
+          // Pending on-chain — start polling
+          persistTx(result.tx_hash, 'pending');
+          setTxStatus('pending');
+          startPolling(result.tx_hash);
+        }
+        return;
+      }
+
+      throw new Error(result.error || 'No transaction hash returned');
     } catch (err: any) {
       console.error('[OnChainSign] Error:', err);
       setSignError(err.message || 'Signing failed');

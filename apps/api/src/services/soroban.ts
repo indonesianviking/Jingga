@@ -734,6 +734,11 @@ export async function getDistributionsOnChain(
 /**
  * Submit a Freighter-signed Soroban transaction to the network.
  * Used when the frontend signs the XDR with Freighter.
+ *
+ * NOTE: This function does NOT block on polling — it submits the transaction
+ * and returns immediately with the txHash. The frontend polls via
+ * GET /api/v1/stellar/tx-status/:hash for final status, because Soroban
+ * testnet can take 60-120 seconds to finalize.
  */
 export async function submitSignedSorobanTx(
   signedXdr: string,
@@ -747,7 +752,7 @@ export async function submitSignedSorobanTx(
       getNetworkPassphrase(),
     );
 
-    // Submit to Soroban RPC
+    // Submit to Soroban RPC (do NOT block on polling — return immediately)
     const result = await rpcServer.sendTransaction(transaction);
     const txHash = result.hash;
 
@@ -755,50 +760,11 @@ export async function submitSignedSorobanTx(
       return { success: false, error: `Transaction error: ${result.errorString || 'Unknown error'}`, txHash };
     }
 
-    // Poll for completion (up to 60 detik — testnet bisa lambat)
-    // NOTE: getTransaction awal bisa return 'not_found' sebelum transaksi
-    // diproses oleh Soroban RPC. Kita harus terus polling selama masih
-    // 'pending' ATAU 'not_found'.
-    let status: string = result.status;
-    let attempts = 0;
-    while ((status === 'pending' || status === 'not_found') && attempts < 60) {
-      await new Promise((r) => setTimeout(r, 1000));
-      try {
-        const pollResult = await rpcServer.getTransaction(txHash);
-        status = pollResult.status;
-      } catch {
-        // getTransaction bisa throw jika txHash belum dikenal — skip, coba lagi
-        status = 'not_found';
-      }
-      attempts++;
-    }
-
-    if (status === 'success') {
-      console.log(`[Soroban] Transaction confirmed: ${txHash}`);
-      return { success: true, txHash };
-    }
-
-    // Final check: polling timeout, tapi tx mungkin masih pending.
-    // Tunggu 5 detik dan cek sekali lagi — testnet kadang lambat update status.
-    if (status === 'pending' || status === 'not_found') {
-      await new Promise((r) => setTimeout(r, 5000));
-      try {
-        const finalResult = await rpcServer.getTransaction(txHash);
-        if (finalResult.status === 'success') {
-          console.log(`[Soroban] Transaction confirmed after final check: ${txHash}`);
-          return { success: true, txHash };
-        }
-        status = finalResult.status;
-      } catch {
-        // Final check juga gagal — lanjut ke return error
-      }
-    }
-
-    // Return txHash even on failure so route handler can still save it
-    console.warn(`[Soroban] Transaction ${txHash} final status: ${status}`);
+    // Return immediately — transaction is pending on-chain.
+    // Frontend will poll via GET /api/v1/stellar/tx-status/:hash for final status.
+    console.log(`[Soroban] Transaction submitted: ${txHash} (status: ${result.status})`);
     return {
-      success: false,
-      error: `Transaction failed with status: ${status}`,
+      success: true,
       txHash,
     };
   } catch (error: any) {

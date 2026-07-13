@@ -296,25 +296,48 @@ router.post('/:id/submit-soroban', requireAuth, async (req: AuthRequest, res: Re
       return;
     }
 
-    // Submit signed transaction to Soroban RPC
+    // Submit signed transaction to Soroban RPC (returns immediately, no polling)
     const result = await submitSignedSorobanTx(signed_xdr);
 
-    if (!result.success) {
-      res.status(500).json({ error: result.error || 'Failed to submit transaction' });
-      return;
-    }
+    // Always save txHash to DB — even if pending, so frontend can poll status
+    if (result.txHash && supabaseAdmin) {
+      // Merge with existing metadata to preserve other fields
+      const { data: existing } = await supabaseAdmin
+        .from('licenses')
+        .select('metadata')
+        .eq('id', id)
+        .single();
 
-    // Update license record with on-chain tx hash
-    if (supabaseAdmin) {
+      const existingMetadata = existing?.metadata || {};
       await supabaseAdmin
         .from('licenses')
-        .update({ metadata: { soroban_tx_hash: result.txHash } } as any)
+        .update({
+          metadata: {
+            ...existingMetadata,
+            soroban_tx_hash: result.txHash,
+          },
+        } as any)
         .eq('id', id);
+    }
+
+    if (!result.success) {
+      // Return txHash even on error so frontend can poll
+      res.status(200).json({
+        success: false,
+        tx_hash: result.txHash,
+        status: 'pending',
+        error: result.error || 'Transaction submitted but pending confirmation',
+        explorer_url: result.txHash
+          ? `https://stellar.expert/explorer/testnet/tx/${result.txHash}`
+          : null,
+      });
+      return;
     }
 
     res.json({
       success: true,
       tx_hash: result.txHash,
+      status: 'submitted',
       explorer_url: `https://stellar.expert/explorer/testnet/tx/${result.txHash}`,
     });
   } catch (error) {
