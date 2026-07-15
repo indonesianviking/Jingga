@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/indonesianviking/jingga-assets/8d1217453b4496bbb7f876ffa306a7c3ffcb0b8f/logo-jingga.png" alt="Jingga Logo" width="180">
+</p>
+
 # Jingga
 
 > Publication and royalty platform for independent writers, researchers, and creators across Southeast Asia. Built on Stellar: instant payments, transparent royalties, no middlemen.
