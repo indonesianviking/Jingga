@@ -5,7 +5,7 @@
 **🌐 Website:** [jingga-web-pi.vercel.app](https://jingga-web-pi.vercel.app)
 **🚀 API:** [jinggaapi-production.up.railway.app](https://jinggaapi-production.up.railway.app/api/v1/health)
 
-![Jingga Web Preview](https://raw.githubusercontent.com/indonesianviking/jingga-assets/bf5bb39f276edcd793d60b2fbd24a998689a9c9c/jingga-web.jpg)
+![Jingga Web Preview](https://raw.githubusercontent.com/indonesianviking/jingga-assets/2301c2fc90e8ec42fe98d8ec519432641540ecf4/tampilan_web_new.png)
 
 ## Table of Contents
 
