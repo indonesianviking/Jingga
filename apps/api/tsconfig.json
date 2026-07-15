@@ -3,8 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@stellar/stellar-sdk/rpc": ["node_modules/@stellar/stellar-sdk/lib/rpc"]
+    },
     "target": "ES2022",
     "lib": ["ES2022"]
   },
