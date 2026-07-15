@@ -1162,7 +1162,7 @@ function OnChainSignButton({
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch { /* ignore */ }
     return null;
   };
 
@@ -1186,14 +1186,14 @@ function OnChainSignButton({
         storageKey,
         JSON.stringify({ txHash: hash, status, timestamp: Date.now() }),
       );
-    } catch {}
+    } catch { /* ignore */ }
   };
 
   // Clear persisted state
   const clearPersisted = () => {
     try {
       localStorage.removeItem(storageKey);
-    } catch {}
+    } catch { /* ignore */ }
   };
 
   // Poll transaction status from backend (inline in useEffect to avoid stale closure)

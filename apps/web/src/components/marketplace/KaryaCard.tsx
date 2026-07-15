@@ -30,7 +30,7 @@ function CardAuthorBadges({ wallet }: { wallet: string }) {
         const data = await res.json();
         setBadges(data.badges || []);
       }
-    } catch {}
+    } catch { /* ignore */ }
   }, [wallet, loaded]);
 
   return (
