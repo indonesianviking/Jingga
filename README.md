@@ -26,16 +26,9 @@
 
 ## Overview
 
-Jingga is a Web3 publication platform that connects writers and readers directly on the Stellar blockchain. Writers publish their work as on-chain assets, set their own prices, and receive payments instantly, with zero platform fees. Smart contracts handle royalty splits for collaborators, and Stellar's built-in escrow (Claimable Balance) enables trustless transactions.
+Jingga is a Web3 marketplace and publication platform purpose-built for written works across Southeast Asia — from short stories and novels to academic papers and long-form journalism. Built on the Stellar blockchain, Jingga eliminates intermediaries by connecting writers directly with their readers. Every published work is minted as a unique Stellar asset, giving creators verifiable on-chain proof of authorship that is immutable and publicly auditable. When a reader purchases access, payments settle in seconds on Stellar at near-zero fees — 100% of the revenue reaches the creator, with zero platform deductions.
 
-### Why Jingga?
-
-- **Zero platform fees**: 100% of revenue goes to creators
-- **Instant settlement**: payments arrive in seconds via Stellar network
-- **Proof of ownership**: each work is minted as a unique Stellar asset
-- **Automatic royalties**: Soroban smart contracts split revenue among collaborators
-- **Cross-currency payments**: Stellar DEX enables payments in USDC, XLM, and more
-- **Decentralized storage**: content is pinned to IPFS via Pinata
+Beyond simple transactions, Jingga leverages Soroban smart contracts to automate what traditionally requires manual paperwork and trust. Collaborative works — co-authored papers, edited anthologies, illustrated stories — are supported through on-chain royalty splits that distribute revenue automatically among all contributors upon each sale. The LicenseManager contract enables creators to issue exclusive or non-exclusive usage rights for adaptations, translations, and republications, with resale royalties built in. A built-in real-time collaborative editor powered by Yjs allows co-authors and editors to write together from different locations, with live cursor tracking and awareness. Content is stored permanently on IPFS via Pinata and wrapped in Stellar's Claimable Balance escrow for trustless transactions — readers pay only when they can prove access, and authors never release content before payment is settled.
 
 ## Architecture
 
