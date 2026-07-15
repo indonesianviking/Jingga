@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { KaryaCard } from '@/components/marketplace/KaryaCard';
@@ -11,7 +11,7 @@ import { Pagination } from '@/components/marketplace/Pagination';
 import { EmptyState } from '@/components/marketplace/EmptyState';
 import { Spinner } from '@/components/ui/Spinner';
 
-export default function MarketplacePage() {
+function MarketplaceContent() {
   const { data, loading, search, kategori, sort, page, updateParams } = useMarketplace();
 
   return (
@@ -92,5 +92,17 @@ export default function MarketplacePage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+export default function MarketplacePage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="flex justify-center py-section"><Spinner size="lg" /></div>
+      </Layout>
+    }>
+      <MarketplaceContent />
+    </Suspense>
   );
 }

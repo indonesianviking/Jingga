@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useCallback, useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
@@ -20,7 +20,7 @@ interface DraftData {
   content: string;
 }
 
-export default function EditorPage() {
+function EditorContent() {
   const { walletAddress, isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, error: authError } = useAuth();
   const router = useRouter();
 
@@ -678,5 +678,19 @@ export default function EditorPage() {
         />
       )}
     </Layout>
+  );
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-pulse text-ink-subtle">Loading...</div>
+        </div>
+      </Layout>
+    }>
+      <EditorContent />
+    </Suspense>
   );
 }
