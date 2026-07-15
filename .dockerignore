@@ -1,0 +1,12 @@
+node_modules/
+.pnpm-store/
+.git/
+.gitignore
+.next/
+out/
+dist/
+goals/
+*.md
+.env*
+.DS_Store
+.gitkeep

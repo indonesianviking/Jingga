@@ -1,10 +1,13 @@
 # ============================================================
-# Jingga API — Railway Dockerfile
+# Jingga API — Railway Dockerfile (root)
 # ============================================================
+# Build context = repo root (DO NOT set Root Directory in Railway)
+# Railway auto-detects this at the project root.
+#
 # Multi-stage build:
 #   1. builder — install deps & build all packages
-#   2. runner — production image (MUST keep workspace structure
-#      so dotenv & path.resolve(process.cwd(), 'apps/api/.env') resolve)
+#   2. runner — production image
+# ============================================================
 
 # --------------- builder ---------------
 FROM node:20-alpine AS builder
@@ -44,8 +47,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 
-# Install only production dependencies (pnpm still resolves workspace:*
-# links correctly from the copied manifests + dist/ below)
+# Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
 
 # Copy built artifacts
