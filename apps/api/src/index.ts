@@ -9,7 +9,6 @@ dotenv.config({ path: path.resolve(process.cwd(), 'apps/api/.env') });
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
-import emailAuthRoutes from './routes/email-auth';
 import uploadRoutes from './routes/upload';
 import karyaRoutes from './routes/karya';
 import stellarRoutes from './routes/stellar';
@@ -49,7 +48,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/auth', emailAuthRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/karya', karyaRoutes);
 app.use('/api/v1', stellarRoutes);

@@ -80,9 +80,7 @@ export function Layout({ children }: LayoutProps) {
               <div className="flex items-center gap-sm">
                 <span className="w-2 h-2 rounded-full bg-semantic-success" />
                 <span className="text-body-sm text-ink font-mono">{truncateAddress(walletAddress)}</span>
-                <span className="text-caption text-ink-subtle">
-                  {authMethod === 'email' ? 'Managed' : 'Freighter'}
-                </span>
+                <span className="text-caption text-ink-subtle">Freighter</span>
                 <button
                   onClick={disconnect}
                   className="text-body-sm text-semantic-error hover:underline"

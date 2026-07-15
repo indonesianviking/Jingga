@@ -88,7 +88,7 @@ export function useWalletBadges(walletAddress: string | null) {
   return { badges, loading };
 }
 
-// Assign onboarding badges (call after email registration)
+/* Assign onboarding badges (call after email registration) */
 export async function assignOnboardingBadges(authMethod: string): Promise<void> {
   await apiRequest('/api/v1/badges/onboard', {
     method: 'POST',

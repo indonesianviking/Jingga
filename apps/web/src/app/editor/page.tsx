@@ -33,38 +33,38 @@ function EditorContent() {
   });
   const searchParams = useSearchParams();
 
-  // Collaboration room: use ?room= query param, localStorage cache, or generate unique session ID
+  /* Collaboration room: use ?room= query param, localStorage cache, or generate unique session ID */
   const roomId = React.useMemo(() => {
     const fromUrl = searchParams.get('room');
     if (fromUrl) return fromUrl;
 
-    // Check localStorage for a saved room
+    /* Check localStorage for a saved room */
     try {
       const cached = localStorage.getItem('jingga_last_room');
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Only reuse rooms from the last 24 hours
+        /* Only reuse rooms from the last 24 hours */
         if (parsed && parsed.id && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
           return parsed.id;
         }
       }
     } catch { /* ignore */ }
 
-    // Generate a unique session ID
+    /* Generate a unique session ID */
     return 'session-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2, 10));
   }, [searchParams]);
 
-  // Collaboration (real-time co-editing via Yjs)
+  /* Collaboration (real-time co-editing via Yjs) */
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [collabStatus, setCollabStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
-  // Save current room to localStorage for persistence
+  /* Save current room to localStorage for persistence */
   useEffect(() => {
     if (roomId) {
       try {
         localStorage.setItem('jingga_last_room', JSON.stringify({ id: roomId, timestamp: Date.now() }));
-        // Also add to recent rooms list
+        /* Also add to recent rooms list */
         const raw = localStorage.getItem('jingga_recent_rooms');
         const rooms = raw ? JSON.parse(raw) : [];
         const filtered = rooms.filter((r: any) => r.id !== roomId);
@@ -74,7 +74,7 @@ function EditorContent() {
     }
   }, [roomId]);
 
-  // Initialize Y.Doc + WebSocket provider once
+  /* Initialize Y.Doc + WebSocket provider once */
   useEffect(() => {
     const WS_URL = process.env.NEXT_PUBLIC_WS_URL || `ws://localhost:3001/collab`;
     const ydoc = new Y.Doc();
@@ -95,7 +95,7 @@ function EditorContent() {
     };
   }, [walletAddress, roomId]);
 
-  // User color derived from wallet address for consistent cursor color
+  /* User color derived from wallet address for consistent cursor color */
   const userColor = React.useMemo(() => {
     if (!walletAddress) return '#0f62fe';
     const colors = ['#0f62fe', '#24a148', '#da1e28', '#f1c21b', '#8a3ffc', '#009d9a', '#ee538b', '#1192e8'];
@@ -120,7 +120,7 @@ function EditorContent() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [leaving, setLeaving] = useState(false);
 
-  // Collaborator state
+  /* Collaborator state */
   const [collaborators, setCollaborators] = useState<Array<{
     wallet_address: string;
     nama: string;
@@ -161,23 +161,23 @@ function EditorContent() {
   const handleLeaveRoom = useCallback(() => {
     setLeaving(true);
 
-    // 1. Disconnect from WebSocket
+    /* 1. Disconnect from WebSocket */
     if (providerRef.current) {
       providerRef.current.disconnect();
       providerRef.current.destroy();
       providerRef.current = null;
     }
 
-    // 2. Destroy Yjs document
+    /* 2. Destroy Yjs document */
     if (ydocRef.current) {
       ydocRef.current.destroy();
       ydocRef.current = null;
     }
 
-    // 3. Remove room from localStorage cache so it doesn't auto-rejoin
+    /* 3. Remove room from localStorage cache so it doesn't auto-rejoin */
     try {
       localStorage.removeItem('jingga_last_room');
-      // Remove from recent rooms too
+      /* Remove from recent rooms too */
       const raw = localStorage.getItem('jingga_recent_rooms');
       if (raw) {
         const rooms = JSON.parse(raw).filter((r: any) => r.id !== roomId);
@@ -188,13 +188,13 @@ function EditorContent() {
     setCollabStatus('disconnected');
     setLeaving(false);
 
-    // 4. Navigate to join page
+    /* 4. Navigate to join page */
     router.push('/join');
   }, [roomId, router]);
 
   const handleEditorChange = useCallback((_html: string, _json: unknown) => {
-    // Content is managed by the editor internally
-    // We capture it on save/publish
+    /* Content is managed by the editor internally */
+    /* We capture it on save/publish */
   }, []);
 
   const handleSaveDraft = useCallback(async () => {
@@ -207,7 +207,7 @@ function EditorContent() {
     setMessage(null);
 
     try {
-      // Get content from editor
+      /* Get content from editor */
       const editorEl = document.querySelector('.ProseMirror');
       const content = editorEl?.innerHTML || form.content;
 
@@ -269,7 +269,7 @@ function EditorContent() {
       };
 
       if (savedDraftId) {
-        // Update existing draft then publish
+        /* Update existing draft then publish */
         await apiRequest(`/api/v1/karya/${savedDraftId}`, {
           method: 'PUT',
           body: JSON.stringify(payload),
@@ -278,7 +278,7 @@ function EditorContent() {
           method: 'POST',
         });
       } else {
-        // Create and publish in one go
+        /* Create and publish in one go */
         await apiRequest('/api/v1/karya', {
           method: 'POST',
           body: JSON.stringify({ ...payload, status: 'published' }),
@@ -287,7 +287,7 @@ function EditorContent() {
 
       setMessage({ type: 'success', text: 'Work published to Marketplace successfully!' });
 
-      // Redirect to dashboard after short delay
+      /* Redirect to dashboard after short delay */
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
@@ -298,7 +298,7 @@ function EditorContent() {
     }
   }, [form, savedDraftId, router, collaborators]);
 
-  // Auth gate
+  /* Auth gate */
   if (authLoading) {
     return (
       <Layout>
@@ -335,16 +335,6 @@ function EditorContent() {
                 Install Freighter Extension
               </a>
             )}
-            <div className="relative my-md">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hairline"></div></div>
-              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">or</span></div>
-            </div>
-            <a
-              href="/login"
-              className="block w-full border border-hairline text-ink text-button py-sm px-md rounded-none hover:bg-surface-1 transition-colors"
-            >
-              Login with Email
-            </a>
             {authError && <p className="text-body-sm text-semantic-error mt-md">{authError}</p>}
           </div>
         </div>
@@ -368,7 +358,7 @@ function EditorContent() {
                   </span>
                 )}
               </p>
-              {/* Room ID — copy shareable link */}
+              {/* Room ID - copy shareable link */}
               <p className="text-body-sm text-ink-subtle mt-xs flex items-center gap-xs flex-wrap">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -378,7 +368,7 @@ function EditorContent() {
                   onClick={() => {
                     const url = `${window.location.origin}/editor?room=${encodeURIComponent(roomId)}`;
                     navigator.clipboard.writeText(url);
-                    setMessage({ type: 'success', text: 'Room link copied — share with collaborators!' });
+                    setMessage({ type: 'success', text: 'Room link copied - share with collaborators!' });
                   }}
                   className="text-primary hover:underline text-caption"
                   title="Copy room link to clipboard"
@@ -642,7 +632,7 @@ function EditorContent() {
               </div>
             </div>
 
-            {/* Room Users — real-time collab */}
+            {/* Room Users - real-time collab */}
             {providerRef.current && walletAddress && (
               <RoomUsers
                 provider={providerRef.current}
@@ -667,7 +657,7 @@ function EditorContent() {
         </div>
       </div>
 
-      {/* Remote cursor overlay — renders above all content */}
+      {/* Remote cursor overlay - renders above all content */}
       {providerRef.current && walletAddress && (
         <CursorOverlay
           provider={providerRef.current}

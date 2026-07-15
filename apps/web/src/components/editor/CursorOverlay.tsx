@@ -3,9 +3,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { WebsocketProvider } from 'y-websocket';
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 interface RemoteCursor {
   clientId: number;
@@ -23,9 +23,9 @@ interface CursorOverlayProps {
   containerSelector?: string;
 }
 
-// ============================================================
-// Component
-// ============================================================
+/* ============================================================ */
+/* Component */
+/* ============================================================ */
 
 /**
  * Renders remote user cursors as colored labels that follow their
@@ -42,15 +42,15 @@ export function CursorOverlay({
   const [cursors, setCursors] = useState<RemoteCursor[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Track mouse position locally (sent via awareness)
+  /* Track mouse position locally (sent via awareness) */
   const mouseRef = useRef({ x: 0, y: 0 });
 
-  // Listen to Yjs awareness for remote cursors
+  /* Listen to Yjs awareness for remote cursors */
   useEffect(() => {
     const awareness = provider.awareness;
     if (!awareness) return;
 
-    // Send our cursor position on mouse move
+    /* Send our cursor position on mouse move */
     const editorEl = document.querySelector(containerSelector);
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
@@ -81,7 +81,7 @@ export function CursorOverlay({
       editorEl.addEventListener('mouseenter', handleMouseEnter as EventListener);
     }
 
-    // Update remote cursors when awareness changes
+    /* Update remote cursors when awareness changes */
     const handleAwarenessChange = () => {
       const states = awareness.getStates();
       const remoteCursors: RemoteCursor[] = [];
@@ -94,7 +94,7 @@ export function CursorOverlay({
 
         if (!user?.name || !cursor) return;
 
-        // Skip self
+        /* Skip self */
         if (user.name === currentUser.name && user.color === currentUser.color) {
           return;
         }
@@ -112,7 +112,7 @@ export function CursorOverlay({
       setCursors(remoteCursors);
     };
 
-    // Initial update
+    /* Initial update */
     handleAwarenessChange();
 
     awareness.on('change', handleAwarenessChange);
@@ -124,7 +124,7 @@ export function CursorOverlay({
         editorEl.removeEventListener('mouseenter', handleMouseEnter as EventListener);
       }
       awareness.off('change', handleAwarenessChange);
-      // Clean up our cursor data
+      /* Clean up our cursor data */
       awareness.setLocalStateField('cursor', null);
     };
   }, [provider, currentUser, containerSelector]);

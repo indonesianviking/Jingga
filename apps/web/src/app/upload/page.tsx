@@ -31,7 +31,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Collaborator state
+  /* Collaborator state */
   const [collaborators, setCollaborators] = useState<Array<{
     wallet_address: string;
     nama: string;
@@ -69,7 +69,7 @@ export default function UploadPage() {
   const totalPercentage = collaborators.reduce((sum, c) => sum + (c.persentase || 0), 0);
   const isPercentageValid = totalPercentage <= 100;
 
-  // Academic integration state
+  /* Academic integration state */
   const [paperAuthors, setPaperAuthors] = useState('');
   const [paperDoi, setPaperDoi] = useState('');
   const [plagiarismResult, setPlagiarismResult] = useState<any>(null);
@@ -124,7 +124,7 @@ export default function UploadPage() {
 
       const { karya } = await res.json();
 
-      // Step 2: Publish karya
+      /* Step 2: Publish karya */
       let publishResult = null;
       try {
         const publishRes = await fetch(`${API_BASE}/api/v1/karya/${karya.id}/publish`, {
@@ -162,7 +162,7 @@ export default function UploadPage() {
     }
   }, [form, file, cover]);
 
-  // Auth gate
+  /* Auth gate */
   if (authLoading) {
     return (
       <Layout>

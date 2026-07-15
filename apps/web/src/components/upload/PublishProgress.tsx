@@ -115,7 +115,7 @@ export function PublishProgress({
     );
   }
 
-  // Progress steps
+  /* Progress steps */
   const currentIdx = stepOrder.indexOf(step);
 
   return (

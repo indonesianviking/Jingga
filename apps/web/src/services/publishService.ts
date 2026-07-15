@@ -10,7 +10,7 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Don't set Content-Type for FormData (browser sets it automatically with boundary)
+  /* Don't set Content-Type for FormData (browser sets it automatically with boundary) */
   if (!(options?.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
@@ -58,7 +58,7 @@ export interface PublishResult {
 }
 
 export async function publishKarya(data: PublishData): Promise<PublishResult> {
-  // Step 1: Create FormData
+  /* Step 1: Create FormData */
   const formData = new FormData();
   formData.append('judul', data.judul);
   formData.append('deskripsi', data.deskripsi);
@@ -71,13 +71,13 @@ export async function publishKarya(data: PublishData): Promise<PublishResult> {
   formData.append('file', data.file);
   if (data.cover) formData.append('cover', data.cover);
 
-  // Step 2: Create karya
+  /* Step 2: Create karya */
   const { karya } = await apiRequest<{ karya: any }>('/api/v1/karya', {
     method: 'POST',
     body: formData,
   });
 
-  // Step 3: Publish karya (triggers minting)
+  /* Step 3: Publish karya (triggers minting) */
   const publishResult = await apiRequest<{ karya: any }>(`/api/v1/karya/${karya.id}/publish`, {
     method: 'POST',
     body: JSON.stringify({
@@ -86,7 +86,7 @@ export async function publishKarya(data: PublishData): Promise<PublishResult> {
     }),
   });
 
-  // Step 4: Mint on Stellar (if not already done by publish)
+  /* Step 4: Mint on Stellar (if not already done by publish) */
   let txHash = publishResult.karya.stellar_tx_hash;
   let explorerUrl = txHash ? `https://stellar.expert/explorer/testnet/tx/${txHash}` : undefined;
   let requiresSigning = false;
@@ -107,7 +107,7 @@ export async function publishKarya(data: PublishData): Promise<PublishResult> {
       }
     } catch (err) {
       console.error('[Publish] Mint error:', err);
-      // Don't fail the whole flow — karya is created, minting can be retried
+      /* Don't fail the whole flow - karya is created, minting can be retried */
     }
   }
 

@@ -10,9 +10,9 @@ import Link from 'next/link';
 import { API_BASE } from '@/lib/api';
 import { signTransaction as freighterSign } from '@/lib/freighter';
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 type LicenseType = 'exclusive' | 'non-exclusive';
 type LicenseDuration = 'perpetual' | '1year' | '5years';
@@ -47,9 +47,9 @@ interface LicenseRecord {
 
 type PurchaseState = 'idle' | 'initiating' | 'signing' | 'confirming' | 'success' | 'error';
 
-// ============================================================
-// Constants
-// ============================================================
+/* ============================================================ */
+/* Constants */
+/* ============================================================ */
 
 const TERRITORY_OPTIONS = [
   { value: 'global', label: 'Global' },
@@ -66,29 +66,29 @@ const DURATION_OPTIONS: { value: LicenseDuration; label: string; description: st
   { value: '1year', label: '1 Year', description: 'Expires in 1 year' },
 ];
 
-// ============================================================
-// Component
-// ============================================================
+/* ============================================================ */
+/* Component */
+/* ============================================================ */
 
 export default function LicensePage() {
   const params = useParams();
   const { isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, walletAddress } = useAuth();
 
-  // Karya state
+  /* Karya state */
   const [karya, setKarya] = useState<KaryaInfo | null>(null);
   const [karyaLoading, setKaryaLoading] = useState(true);
 
-  // Licenses state
+  /* Licenses state */
   const [licenses, setLicenses] = useState<LicenseRecord[]>([]);
   const [totalLicenses, setTotalLicenses] = useState(0);
   const [licensesLoading, setLicensesLoading] = useState(true);
 
-  // Form state
+  /* Form state */
   const [licenseType, setLicenseType] = useState<LicenseType>('non-exclusive');
   const [territory, setTerritory] = useState('global');
   const [duration, setDuration] = useState<LicenseDuration>('perpetual');
 
-  // Purchase state
+  /* Purchase state */
   const [purchaseState, setPurchaseState] = useState<PurchaseState>('idle');
   const [purchaseError, setPurchaseError] = useState('');
   const [purchaseResult, setPurchaseResult] = useState<{
@@ -98,28 +98,28 @@ export default function LicensePage() {
     explorer_url: string;
   } | null>(null);
 
-  // Active tab
+  /* Active tab */
   const [activeTab, setActiveTab] = useState<'purchase' | 'existing'>('purchase');
 
   const karyaId = params.id as string;
   const isOwner = karya?.issuer_wallet === walletAddress;
   const licenseFee = karya ? karya.harga * 5 : 0;
 
-  // ============================================================
-  // Data Fetching
-  // ============================================================
+  /* ============================================================ */
+  /* Data Fetching */
+  /* ============================================================ */
 
   useEffect(() => {
     if (!karyaId) return;
 
-    // Fetch karya info
+    /* Fetch karya info */
     fetch(`${API_BASE}/api/v1/karya/${karyaId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setKarya(data?.karya || null))
       .catch(() => setKarya(null))
       .finally(() => setKaryaLoading(false));
 
-    // Fetch licenses
+    /* Fetch licenses */
     fetch(`${API_BASE}/api/v1/licenses/karya/${karyaId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -132,9 +132,9 @@ export default function LicensePage() {
       .finally(() => setLicensesLoading(false));
   }, [karyaId]);
 
-  // ============================================================
-  // Purchase Flow
-  // ============================================================
+  /* ============================================================ */
+  /* Purchase Flow */
+  /* ============================================================ */
 
   const handlePurchase = async () => {
     setPurchaseState('initiating');
@@ -143,7 +143,7 @@ export default function LicensePage() {
     try {
       const token = localStorage.getItem('jingga_auth_token');
 
-      // Step 1: Initiate license purchase
+      /* Step 1: Initiate license purchase */
       const initiateRes = await fetch(`${API_BASE}/api/v1/licenses/purchase`, {
         method: 'POST',
         headers: {
@@ -165,7 +165,7 @@ export default function LicensePage() {
 
       const { xdr } = await initiateRes.json();
 
-      // Step 2: Sign with Freighter
+      /* Step 2: Sign with Freighter */
       setPurchaseState('signing');
 
       const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'public'
@@ -174,7 +174,7 @@ export default function LicensePage() {
 
       const signedXdr = await freighterSign(xdr, networkPassphrase);
 
-      // Step 3: Confirm license purchase
+      /* Step 3: Confirm license purchase */
       setPurchaseState('confirming');
 
       const confirmRes = await fetch(`${API_BASE}/api/v1/licenses/confirm`, {
@@ -201,7 +201,7 @@ export default function LicensePage() {
       setPurchaseResult(result);
       setPurchaseState('success');
 
-      // Refresh licenses
+      /* Refresh licenses */
       const updatedLicenses = await fetch(`${API_BASE}/api/v1/licenses/karya/${karyaId}`)
         .then((r) => (r.ok ? r.json() : null));
       if (updatedLicenses) {
@@ -215,9 +215,9 @@ export default function LicensePage() {
     }
   };
 
-  // ============================================================
-  // Auth Gate
-  // ============================================================
+  /* ============================================================ */
+  /* Auth Gate */
+  /* ============================================================ */
 
   if (authLoading || karyaLoading) {
     return (
@@ -275,9 +275,9 @@ export default function LicensePage() {
     );
   }
 
-  // ============================================================
-  // Render
-  // ============================================================
+  /* ============================================================ */
+  /* Render */
+  /* ============================================================ */
 
   return (
     <Layout>
@@ -645,7 +645,7 @@ export default function LicensePage() {
                           disabled={purchaseState !== 'idle'}
                           className="w-full px-lg py-md bg-primary text-on-primary text-body font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-md"
                         >
-                          Purchase License — {licenseFee} XLM
+                          Purchase License - {licenseFee} XLM
                         </button>
 
                         <p className="text-caption text-ink-subtle text-center">
@@ -803,7 +803,7 @@ export default function LicensePage() {
                                 : 'Test SDF Network ; September 2015'
                             }
                             onResellComplete={() => {
-                              // Refresh licenses after resale
+                              /* Refresh licenses after resale */
                               fetch(`${API_BASE}/api/v1/licenses/karya/${karyaId}`)
                                 .then(r => r.ok ? r.json() : null)
                                 .then(d => { if (d) setLicenses(d.licenses || []); });
@@ -823,9 +823,9 @@ export default function LicensePage() {
   );
 }
 
-// ============================================================
-// Resell License Modal Component
-// ============================================================
+/* ============================================================ */
+/* Resell License Modal Component */
+/* ============================================================ */
 
 function ResellModal({
   licenseId,
@@ -858,7 +858,7 @@ function ResellModal({
     try {
       const token = localStorage.getItem('jingga_auth_token');
 
-      // Step 1: Initiate resale
+      /* Step 1: Initiate resale */
       const initiateRes = await fetch(`${API_BASE}/api/v1/licenses/resale/initiate`, {
         method: 'POST',
         headers: {
@@ -879,11 +879,11 @@ function ResellModal({
 
       const { xdr } = await initiateRes.json();
 
-      // Step 2: Sign with Freighter
+      /* Step 2: Sign with Freighter */
       setState('signing');
       const signedXdr = await freighterSign(xdr, networkPassphrase);
 
-      // Step 3: Confirm resale
+      /* Step 3: Confirm resale */
       setState('confirming');
       const confirmRes = await fetch(`${API_BASE}/api/v1/licenses/resale/confirm`, {
         method: 'POST',
@@ -1121,14 +1121,14 @@ function ResellModal({
   );
 }
 
-// ============================================================
-// On-Chain Sign Button Component
-// ============================================================
+/* ============================================================ */
+/* On-Chain Sign Button Component */
+/* ============================================================ */
 //
-// Saves transaction state (txHash, status) to sessionStorage so it
-// persists across page refreshes. Auto-polls pending transactions
-// and displays live status: SUCCESS / PENDING / ERROR.
-// ============================================================
+/* Saves transaction state (txHash, status) to sessionStorage so it */
+/* persists across page refreshes. Auto-polls pending transactions */
+/* and displays live status: SUCCESS / PENDING / ERROR. */
+/* ============================================================ */
 
 const STORAGE_KEY_PREFIX = 'jingga_license_tx_';
 
@@ -1144,7 +1144,7 @@ function OnChainSignButton({
   const pollingCountRef = useRef(0);
   const MAX_POLL_ATTEMPTS = 36; // ~6 minutes (36 × 10s)
 
-  // Cleanup polling on unmount
+  /* Cleanup polling on unmount */
   useEffect(() => {
     return () => {
       if (pollingRef.current !== null) {
@@ -1153,7 +1153,7 @@ function OnChainSignButton({
     };
   }, []);
 
-  // Restore persisted state on mount
+  /* Restore persisted state on mount */
   const getPersisted = (): {
     txHash: string;
     status: 'pending' | 'success' | 'failed' | 'not_found' | '';
@@ -1176,7 +1176,7 @@ function OnChainSignButton({
   >('');
   const [checkingStatus, setCheckingStatus] = useState(false);
 
-  // Persist to localStorage
+  /* Persist to localStorage */
   const persistTx = (
     hash: string,
     status: 'pending' | 'success' | 'failed' | 'not_found' | '',
@@ -1189,20 +1189,20 @@ function OnChainSignButton({
     } catch { /* ignore */ }
   };
 
-  // Clear persisted state
+  /* Clear persisted state */
   const clearPersisted = () => {
     try {
       localStorage.removeItem(storageKey);
     } catch { /* ignore */ }
   };
 
-  // Poll transaction status from backend (inline in useEffect to avoid stale closure)
+  /* Poll transaction status from backend (inline in useEffect to avoid stale closure) */
   const startPolling = useCallback((hash: string) => {
     pollingCountRef.current = 0;
     pollingRef.current = null;
 
     const poll = async () => {
-      // Max retry check
+      /* Max retry check */
       if (pollingCountRef.current >= MAX_POLL_ATTEMPTS) {
         setCheckingStatus(false);
         setSignState('error');
@@ -1238,18 +1238,18 @@ function OnChainSignButton({
           }
         }
       } catch {
-        // Network error — will retry
+        /* Network error - will retry */
       }
 
       setCheckingStatus(false);
-      // Poll again in 10 seconds
+      /* Poll again in 10 seconds */
       pollingRef.current = window.setTimeout(poll, 10000);
     };
 
     poll();
   }, []);
 
-  // Restore persisted state on mount
+  /* Restore persisted state on mount */
   useEffect(() => {
     const persisted = getPersisted();
     if (persisted && persisted.txHash) {
@@ -1281,7 +1281,7 @@ function OnChainSignButton({
     try {
       const token = localStorage.getItem('jingga_auth_token');
 
-      // Step 1: Fetch unsigned XDR from /:id/xdr
+      /* Step 1: Fetch unsigned XDR from /:id/xdr */
       const xdrRes = await fetch(
         `${API_BASE}/api/v1/licenses/${licenseId}/xdr`,
         {
@@ -1299,19 +1299,19 @@ function OnChainSignButton({
       const xdrData = await xdrRes.json();
       if (!xdrData.success) {
         throw new Error(
-          xdrData.error || 'Failed to prepare transaction — contract error',
+          xdrData.error || 'Failed to prepare transaction - contract error',
         );
       }
       if (!xdrData.xdr) {
         throw new Error('No XDR received from server');
       }
 
-      // Step 2: Sign with Freighter
+      /* Step 2: Sign with Freighter */
       setSignState('signing');
       const xdr = xdrData.xdr;
       const signedXdr = await freighterSign(xdr, networkPassphrase);
 
-      // Step 3: Submit signed XDR
+      /* Step 3: Submit signed XDR */
       setSignState('submitting');
       const submitRes = await fetch(
         `${API_BASE}/api/v1/licenses/${licenseId}/submit-soroban`,
@@ -1328,23 +1328,23 @@ function OnChainSignButton({
       const result = await submitRes.json();
 
       if (!submitRes.ok) {
-        // HTTP error (server error, not tx failure)
+        /* HTTP error (server error, not tx failure) */
         throw new Error(
           result.error || 'Failed to submit transaction',
         );
       }
 
-      // Backend returns success:true (confirmed immediately) OR
-      // success:false but with tx_hash (submitted, pending on-chain)
+      /* Backend returns success:true (confirmed immediately) OR */
+      /* success:false but with tx_hash (submitted, pending on-chain) */
       if (result.tx_hash) {
         setTxHash(result.tx_hash);
         if (result.status === 'submitted' && result.success) {
-          // Confirmed immediately — no polling needed
+          /* Confirmed immediately - no polling needed */
           persistTx(result.tx_hash, 'success');
           setTxStatus('success');
           setSignState('success');
         } else {
-          // Pending on-chain — start polling
+          /* Pending on-chain - start polling */
           persistTx(result.tx_hash, 'pending');
           setTxStatus('pending');
           startPolling(result.tx_hash);
@@ -1360,9 +1360,9 @@ function OnChainSignButton({
     }
   };
 
-  // ============================================================
-  // Render: Success
-  // ============================================================
+  /* ============================================================ */
+  /* Render: Success */
+  /* ============================================================ */
   if (signState === 'success' && txHash) {
     return (
       <div className="mt-md pt-md border-t border-hairline">
@@ -1422,9 +1422,9 @@ function OnChainSignButton({
     );
   }
 
-  // ============================================================
-  // Render: Pending / Checking
-  // ============================================================
+  /* ============================================================ */
+  /* Render: Pending / Checking */
+  /* ============================================================ */
   if (
     signState === 'submitting' &&
     txHash &&
@@ -1475,9 +1475,9 @@ function OnChainSignButton({
     );
   }
 
-  // ============================================================
-  // Render: Loading (fetching/signing/submitting)
-  // ============================================================
+  /* ============================================================ */
+  /* Render: Loading (fetching/signing/submitting) */
+  /* ============================================================ */
   if (
     signState === 'fetching' ||
     signState === 'signing' ||
@@ -1497,9 +1497,9 @@ function OnChainSignButton({
     );
   }
 
-  // ============================================================
-  // Render: Default (idle / error)
-  // ============================================================
+  /* ============================================================ */
+  /* Render: Default (idle / error) */
+  /* ============================================================ */
   return (
     <div className="mt-md pt-md border-t border-hairline">
       <p className="text-body-sm text-ink-muted mb-sm">
@@ -1533,7 +1533,7 @@ function OnChainSignButton({
         </div>
       )}
 
-      {/* Error with txHash — transaction might still go through */}
+      {/* Error with txHash - transaction might still go through */}
       {txHash && (txStatus === 'failed' || txStatus === '') && (
         <div className="bg-semantic-error/5 border border-semantic-error/20 p-md mb-md">
           <div className="flex items-center gap-sm mb-xs">

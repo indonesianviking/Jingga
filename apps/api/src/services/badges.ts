@@ -221,8 +221,5 @@ export async function assignOnboardingBadges(userId: string, authMethod: string)
     await assignBadge(userId, 'stellar_native', { source: 'onboarding' });
   }
 
-  // Verified badge for email users
-  if (authMethod === 'email') {
-    await assignBadge(userId, 'verified', { source: 'onboarding' });
-  }
+
 }

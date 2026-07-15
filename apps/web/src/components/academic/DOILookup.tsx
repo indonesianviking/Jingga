@@ -33,7 +33,7 @@ export function DOILookup({ onMetadataFilled, currentTitle, kategori }: DOILooku
   const [result, setResult] = useState<CrossRefMetadata | null>(null);
   const [error, setError] = useState('');
 
-  // Only show for paper/article category
+  /* Only show for paper/article category */
   if (kategori && kategori !== 'paper') return null;
 
   const handleLookupDOI = async () => {

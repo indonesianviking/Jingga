@@ -1,8 +1,8 @@
-// ============================================================
-// Slash Command Extension for TipTap v3
-// Triggered by typing "/" at the start of a line.
-// Uses tippy.js for the floating suggestion dropdown.
-// ============================================================
+/* ============================================================ */
+/* Slash Command Extension for TipTap v3 */
+/* Triggered by typing "/" at the start of a line. */
+/* Uses tippy.js for the floating suggestion dropdown. */
+/* ============================================================ */
 
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
@@ -10,9 +10,9 @@ import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import type { Instance as TippyInstance } from 'tippy.js';
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 export interface SlashCommandItem {
   title: string;
@@ -22,9 +22,9 @@ export interface SlashCommandItem {
   command: (props: { editor: any; range: any }) => void;
 }
 
-// ============================================================
-// Command Items
-// ============================================================
+/* ============================================================ */
+/* Command Items */
+/* ============================================================ */
 
 const COMMAND_ITEMS: SlashCommandItem[] = [
   {
@@ -115,7 +115,7 @@ const COMMAND_ITEMS: SlashCommandItem[] = [
     icon: '🖼',
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
-      // Trigger file input – we store a flag so the editor can open the picker
+      /* Trigger file input – we store a flag so the editor can open the picker */
       window.dispatchEvent(new CustomEvent('editor:trigger-image-upload'));
     },
   },
@@ -131,9 +131,9 @@ function getFilteredItems(query: string): SlashCommandItem[] {
   ).slice(0, 10);
 }
 
-// ============================================================
-// Extension
-// ============================================================
+/* ============================================================ */
+/* Extension */
+/* ============================================================ */
 
 export const SlashCommandExtension = Extension.create({
   name: 'slashCommand',
@@ -167,7 +167,7 @@ export const SlashCommandExtension = Extension.create({
 
           function renderItems(items: SlashCommandItem[], onSelect: (item: SlashCommandItem) => void) {
             if (!container) return;
-            // Local const for proper TS narrowing inside callbacks
+            /* Local const for proper TS narrowing inside callbacks */
             const el = container;
             el.innerHTML = '';
             selectedIndex = 0;

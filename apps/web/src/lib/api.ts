@@ -16,7 +16,7 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
     ...(options?.headers as Record<string, string> || {}),
   };
 
-  // Don't set Content-Type for FormData (browser sets it automatically with boundary)
+  /* Don't set Content-Type for FormData (browser sets it automatically with boundary) */
   if (!(options?.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }

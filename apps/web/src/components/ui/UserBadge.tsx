@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 
-// ============================================================
-// Badge Icon SVGs (Discord-style)
-// ============================================================
+/* ============================================================ */
+/* Badge Icon SVGs (Discord-style) */
+/* ============================================================ */
 const BADGE_ICONS: Record<string, React.ReactNode> = {
   feather: (
     <svg viewBox="0 0 20 20" fill="none" className="w-full h-full">
@@ -98,7 +98,7 @@ const BADGE_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-// Fallback for unknown icons
+/* Fallback for unknown icons */
 function FallbackIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" className="w-full h-full">
@@ -108,9 +108,9 @@ function FallbackIcon() {
   );
 }
 
-// ============================================================
-// Tier colors (like Discord's badge tiers)
-// ============================================================
+/* ============================================================ */
+/* Tier colors (like Discord's badge tiers) */
+/* ============================================================ */
 const TIER_COLORS: Record<number, { bg: string; text: string; border: string; glow: string }> = {
   1: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-300', glow: 'shadow-amber-200' },      // Bronze
   2: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-400', glow: 'shadow-slate-300' },      // Silver
@@ -119,9 +119,9 @@ const TIER_COLORS: Record<number, { bg: string; text: string; border: string; gl
   5: { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-400', glow: 'shadow-purple-200' },   // Diamond
 };
 
-// ============================================================
-// Category colors
-// ============================================================
+/* ============================================================ */
+/* Category colors */
+/* ============================================================ */
 const CATEGORY_COLORS: Record<string, string> = {
   achievement: 'text-amber-500',
   contribution: 'text-blue-500',
@@ -129,9 +129,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   milestone: 'text-purple-500',
 };
 
-// ============================================================
-// Props
-// ============================================================
+/* ============================================================ */
+/* Props */
+/* ============================================================ */
 interface UserBadgeProps {
   code: string;
   name: string;
@@ -144,9 +144,9 @@ interface UserBadgeProps {
   className?: string;
 }
 
-// ============================================================
-// Component
-// ============================================================
+/* ============================================================ */
+/* Component */
+/* ============================================================ */
 export function UserBadge({
   code,
   name,
@@ -176,7 +176,7 @@ export function UserBadge({
       onMouseEnter={() => setShowTip(true)}
       onMouseLeave={() => setShowTip(false)}
     >
-      {/* Badge Circle — Discord-style */}
+      {/* Badge Circle - Discord-style */}
       <div
         className={[
           sizeClasses[size],
@@ -194,7 +194,7 @@ export function UserBadge({
         </span>
       </div>
 
-      {/* Tooltip — Discord-style on hover */}
+      {/* Tooltip - Discord-style on hover */}
       {showTooltip && showTip && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] pointer-events-none">
           <div className="bg-inverse-canvas border border-inverse-surface-1 rounded-none px-md py-sm min-w-[180px] shadow-lg">
@@ -226,9 +226,9 @@ export function UserBadge({
   );
 }
 
-// ============================================================
-// Badge Showcase — Display all badges for a user
-// ============================================================
+/* ============================================================ */
+/* Badge Showcase - Display all badges for a user */
+/* ============================================================ */
 interface BadgeShowcaseProps {
   badges: Array<{
     badge_code: string;

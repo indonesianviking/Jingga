@@ -21,14 +21,14 @@ const KATEGORI_FILTERS = ['all', 'fiksi', 'paper', 'puisi', 'non-fiksi'] as cons
 export default function ReaderPage() {
   const { isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, error: authError } = useAuth();
 
-  // Dashboard overview
+  /* Dashboard overview */
   const { data: overview, loading: overviewLoading, refetch } = useReaderDashboard();
 
-  // Purchase list
+  /* Purchase list */
   const [kategori, setKategori] = useState<string>('all');
   const { data: purchaseData, loading: purchaseLoading } = usePurchaseList(kategori);
 
-  // Auth gate
+  /* Auth gate */
   if (authLoading) {
     return (
       <Layout>
@@ -65,16 +65,6 @@ export default function ReaderPage() {
                 Install Freighter Extension
               </a>
             )}
-            <div className="relative my-md">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hairline"></div></div>
-              <div className="relative flex justify-center text-sm"><span className="bg-canvas px-sm text-ink-subtle">or</span></div>
-            </div>
-            <Link
-              href="/login"
-              className="block w-full border border-hairline text-ink text-button py-sm px-md rounded-none hover:bg-surface-1 transition-colors"
-            >
-              Login with Email
-            </Link>
             {authError && <p className="text-body-sm text-semantic-error mt-md">{authError}</p>}
           </div>
         </div>
@@ -205,9 +195,9 @@ export default function ReaderPage() {
   );
 }
 
-// ============================================================
-// License Section Component (fetches & displays user's purchased licenses)
-// ============================================================
+/* ============================================================ */
+/* License Section Component (fetches & displays user's purchased licenses) */
+/* ============================================================ */
 
 function LicenseSection() {
   const [licenses, setLicenses] = useState<any[]>([]);

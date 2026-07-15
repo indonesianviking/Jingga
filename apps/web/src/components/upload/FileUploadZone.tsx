@@ -72,7 +72,7 @@ export function FileUploadZone({
     setStatus('Calculating hash...');
 
     try {
-      // Simulate progress
+      /* Simulate progress */
       const progressInterval = setInterval(() => {
         setProgress((p) => Math.min(p + 20, 80));
       }, 300);

@@ -68,7 +68,7 @@ export default function KaryaDetailPage() {
       .finally(() => setLoading(false));
   }, [params.id]);
 
-  // Record view
+  /* Record view */
   useEffect(() => {
     if (karya?.id) {
       fetch(`${API_BASE}/api/v1/karya/${karya.id}/view`, {

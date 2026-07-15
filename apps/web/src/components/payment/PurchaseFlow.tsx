@@ -42,7 +42,7 @@ export function PurchaseFlow({
     explorerUrl: string;
   } | null>(null);
 
-  // Fade-in animation on mount
+  /* Fade-in animation on mount */
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 50);
     return () => clearTimeout(timer);
@@ -56,7 +56,7 @@ export function PurchaseFlow({
     setError('');
 
     try {
-      // 1. Initiate payment - get XDR
+      /* 1. Initiate payment - get XDR */
       const token = getToken();
       const initiateRes = await fetch(`${API_BASE}/api/v1/payments/initiate`, {
         method: 'POST',
@@ -75,17 +75,17 @@ export function PurchaseFlow({
       const initData = await initiateRes.json();
       const { xdr, signed_xdr, custodial } = initData;
 
-      // 2. Sign transaction
+      /* 2. Sign transaction */
       let signedXdr: string;
 
       if (custodial && signed_xdr) {
-        // Custodial flow: backend already signed (email/managed wallet users)
+        /* Custodial flow: backend already signed (email/managed wallet users) */
         signedXdr = signed_xdr;
       } else {
-        // Freighter flow: user signs with their wallet extension
+        /* Freighter flow: user signs with their wallet extension */
         setState('signing');
 
-        // Wait for Freighter extension to inject API (up to 5s)
+        /* Wait for Freighter extension to inject API (up to 5s) */
         const available = await waitForFreighter(5000);
         if (!available) {
           throw new Error('Freighter wallet not detected. Please make sure the Freighter extension is installed and unlocked.');
@@ -98,7 +98,7 @@ export function PurchaseFlow({
         signedXdr = await signTransaction(xdr, networkPassphrase);
       }
 
-      // 3. Confirm payment
+      /* 3. Confirm payment */
       setState('confirming');
 
       const confirmRes = await fetch(`${API_BASE}/api/v1/payments/confirm`, {
@@ -130,7 +130,7 @@ export function PurchaseFlow({
     }
   };
 
-  // Handle retroactive verification — if Stellar tx went through but DB failed
+  /* Handle retroactive verification - if Stellar tx went through but DB failed */
   const handleVerify = async () => {
     if (!verifyTxHash.trim()) {
       setError('Please enter the transaction hash from your Freighter wallet');
@@ -278,7 +278,7 @@ export function PurchaseFlow({
           )}
         </div>
 
-        {/* Retroactive verification — for when Stellar tx succeeded but confirm failed */}
+        {/* Retroactive verification - for when Stellar tx succeeded but confirm failed */}
         <details className="mt-lg border-t border-hairline pt-lg">
           <summary className="text-body-sm text-primary cursor-pointer hover:underline">
             Payment went through in Freighter but app shows error?
@@ -346,7 +346,7 @@ export function PurchaseFlow({
     );
   }
 
-  // Idle state
+  /* Idle state */
   return (
     <div className="bg-canvas border border-hairline p-xl">
       <h3 className="text-card-title text-ink mb-sm">Purchase Access</h3>

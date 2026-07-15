@@ -14,7 +14,6 @@ interface User {
   id: string;
   wallet_address: string;
   nama: string;
-  email?: string;
   role: string;
   auth_type?: string;
   created_at: string;
@@ -35,14 +34,12 @@ interface AuthState {
   isConnecting: boolean;
   isRestoring: boolean;
   isFreighterAvailable: boolean;
-  authMethod: 'freighter' | 'email' | null;
+  authMethod: 'freighter' | null;
   error: string | null;
 }
 
 interface AuthContextType extends AuthState {
   connectFreighter: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<void>;
-  registerWithEmail: (email: string, nama: string, password: string) => Promise<void>;
   disconnect: () => void;
 }
 
@@ -60,10 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
   const [isFreighterAvailable, setIsFreighterAvailable] = useState(false);
-  const [authMethod, setAuthMethod] = useState<'freighter' | 'email' | null>(null);
+  const [authMethod, setAuthMethod] = useState<'freighter' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Check Freighter on mount + periodically (extension may load after page)
+  /* Check Freighter on mount + periodically (extension may load after page) */
   useEffect(() => {
     isFreighterInstalled().then(setIsFreighterAvailable);
     const interval = setInterval(() => {
@@ -72,16 +69,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Restore session from localStorage
+  /* Restore session from localStorage */
   useEffect(() => {
     const savedToken = localStorage.getItem(TOKEN_KEY);
     const savedWallet = localStorage.getItem(WALLET_KEY);
-    const savedMethod = localStorage.getItem(AUTH_METHOD_KEY) as 'freighter' | 'email' | null;
+    const savedMethod = localStorage.getItem(AUTH_METHOD_KEY) as 'freighter' | null;
     if (savedToken && savedWallet) {
       setToken(savedToken);
       setWalletAddress(savedWallet);
       setAuthMethod(savedMethod);
-      // Verify token
+      /* Verify token */
       fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: { Authorization: `Bearer ${savedToken}` },
       })
@@ -98,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch(() => {
-          // Network error — keep saved session, user stays logged in
+          /* Network error - keep saved session, user stays logged in */
           console.warn('[Auth] Could not verify session, using cached data');
         })
         .finally(() => {
@@ -114,11 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      // Request access first (required by Freighter v2)
+      /* Request access first (required by Freighter v2) */
       await requestAccess();
       const publicKey = await getPublicKey();
 
-      // Get challenge from backend
+      /* Get challenge from backend */
       const challengeRes = await fetch(`${API_BASE}/api/v1/auth/challenge`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,17 +126,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { challenge, nonce } = await challengeRes.json();
 
-      // Try to sign the challenge with Freighter wallet
-      // signMessage returns null if not available (graceful fallback)
+      /* Try to sign the challenge with Freighter wallet */
+      /* signMessage returns null if not available (graceful fallback) */
       const signedMessage = await signMessage(challenge);
 
-      // Build verify payload — include signedMessage only if available
+      /* Build verify payload - include signedMessage only if available */
       const verifyPayload: Record<string, string> = { publicKey, nonce };
       if (signedMessage) {
         verifyPayload.signedMessage = signedMessage;
       }
 
-      // Verify with backend
+      /* Verify with backend */
       const verifyRes = await fetch(`${API_BASE}/api/v1/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setWallet({ publicKey, isFunded: true, isCustodial: false });
       setAuthMethod('freighter');
 
-      // Auto-assign onboarding badges (non-blocking)
+      /* Auto-assign onboarding badges (non-blocking) */
       apiRequest('/api/v1/badges/onboard', {
         method: 'POST',
         body: JSON.stringify({ auth_method: 'freighter' }),
@@ -170,88 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.error('[Auth] Freighter connect error:', err);
       setError(err.message || 'Failed to connect wallet');
-    } finally {
-      setIsConnecting(false);
-    }
-  }, []);
-
-  const registerWithEmail = useCallback(async (email: string, nama: string, password: string) => {
-    setIsConnecting(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, nama, password }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Registration failed');
-      }
-
-      const { token: newToken, user: userData, wallet: walletData } = await res.json();
-
-      localStorage.setItem(TOKEN_KEY, newToken);
-      localStorage.setItem(WALLET_KEY, walletData.publicKey);
-      localStorage.setItem(AUTH_METHOD_KEY, 'email');
-      setToken(newToken);
-      setWalletAddress(walletData.publicKey);
-      setUser(userData);
-      setWallet({ ...walletData, isCustodial: true });
-      setAuthMethod('email');
-
-      // Auto-assign onboarding badges (non-blocking)
-      apiRequest('/api/v1/badges/onboard', {
-        method: 'POST',
-        body: JSON.stringify({ auth_method: 'email' }),
-      }).catch(() => {});
-    } catch (err: any) {
-      console.error('[Auth] Register error:', err);
-      setError(err.message || 'Registration failed');
-      throw err;
-    } finally {
-      setIsConnecting(false);
-    }
-  }, []);
-
-  const loginWithEmail = useCallback(async (email: string, password: string) => {
-    setIsConnecting(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Login failed');
-      }
-
-      const { token: newToken, user: userData, wallet: walletData } = await res.json();
-
-      localStorage.setItem(TOKEN_KEY, newToken);
-      localStorage.setItem(WALLET_KEY, walletData.publicKey);
-      localStorage.setItem(AUTH_METHOD_KEY, 'email');
-      setToken(newToken);
-      setWalletAddress(walletData.publicKey);
-      setUser(userData);
-      setWallet({ ...walletData, isCustodial: true });
-      setAuthMethod('email');
-
-      // Auto-assign onboarding badges for returning user (non-blocking, will be no-op if already assigned)
-      apiRequest('/api/v1/badges/onboard', {
-        method: 'POST',
-        body: JSON.stringify({ auth_method: 'email' }),
-      }).catch(() => {});
-    } catch (err: any) {
-      console.error('[Auth] Login error:', err);
-      setError(err.message || 'Login failed');
-      throw err;
     } finally {
       setIsConnecting(false);
     }
@@ -283,8 +198,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authMethod,
         error,
         connectFreighter,
-        loginWithEmail,
-        registerWithEmail,
         disconnect,
       }}
     >

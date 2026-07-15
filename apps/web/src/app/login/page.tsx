@@ -1,17 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
+const FREIGHTER_LOGO = 'https://external-preview.redd.it/AiNxDMcGTq7dHjNRCHNAyEc_3tj3qRJgFxpDTw3l30c.jpg?auto=webp&s=29c13654a6925c7d979c1c39b20264e6883bd50c';
+
 export default function LoginPage() {
-  const { loginWithEmail, isConnected } = useAuth();
+  const { isConnected, isConnecting, isFreighterAvailable, connectFreighter, error } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isConnected) {
@@ -21,67 +19,76 @@ export default function LoginPage() {
 
   if (isConnected) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      await loginWithEmail(form.email, form.password);
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <main className="min-h-screen flex items-center justify-center bg-surface-1 px-lg">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="bg-canvas border border-hairline p-xl">
-          <h1 className="text-headline text-ink mb-lg">Sign In</h1>
+          {/* Logo */}
+          <div className="text-center mb-lg">
+            <h1 className="text-headline text-ink mb-xs">Jingga</h1>
+            <p className="text-body-sm text-ink-muted">Connect your Stellar wallet to get started</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-md">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Your password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-            />
-
-            {error && (
-              <p className="text-body-sm text-semantic-error">{error}</p>
+          <div className="space-y-md">
+            {isFreighterAvailable ? (
+              <button
+                onClick={connectFreighter}
+                disabled={isConnecting}
+                className="w-full flex items-center justify-center gap-md bg-primary text-on-primary text-button font-medium py-md px-lg hover:bg-primary-hover transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                <img
+                  src={FREIGHTER_LOGO}
+                  alt="Freighter"
+                  className="w-6 h-6 object-contain rounded-full bg-white"
+                />
+                {isConnecting ? 'Connecting...' : 'Connect Freighter Wallet'}
+              </button>
+            ) : (
+              <div className="space-y-md">
+                <div className="bg-surface-1 border border-hairline p-lg text-center">
+                  <p className="text-body-sm text-ink-muted mb-md">
+                    Freighter wallet extension is required to use Jingga.
+                  </p>
+                  <a
+                    href="https://www.freighter.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-md bg-primary text-on-primary text-button font-medium py-sm px-lg hover:bg-primary-hover transition-all"
+                  >
+                    <img
+                      src={FREIGHTER_LOGO}
+                      alt="Freighter"
+                      className="w-5 h-5 object-contain rounded-full bg-white"
+                    />
+                    Install Freighter
+                  </a>
+                </div>
+                <button
+                  onClick={connectFreighter}
+                  className="w-full border border-hairline text-ink text-button py-sm px-md hover:bg-surface-1 transition-colors"
+                >
+                  I already have Freighter
+                </button>
+              </div>
             )}
 
-            <Button type="submit" variant="primary" size="lg" loading={loading}>
-              Sign In
-            </Button>
-          </form>
+            {error && (
+              <p className="text-body-sm text-semantic-error text-center">{error}</p>
+            )}
+          </div>
 
-          <div className="mt-lg text-center">
-            <p className="text-body-sm text-ink-muted">
-              Don&apos;t have an account?{' '}
-              <a href="/register" className="text-primary hover:underline">Create one</a>
+          <div className="mt-lg pt-lg border-t border-hairline text-center">
+            <p className="text-caption text-ink-subtle">
+              By connecting, you agree to the Jingga terms of service.
             </p>
           </div>
+        </div>
 
-          <div className="mt-md pt-md border-t border-hairline text-center">
-            <a href="/" className="text-body-sm text-primary hover:underline">
-              Or connect with Freighter wallet
-            </a>
-          </div>
+        {/* Back to home */}
+        <div className="text-center mt-md">
+          <a href="/" className="text-body-sm text-ink-muted hover:text-primary transition-colors">
+            &larr; Back to Home
+          </a>
         </div>
       </div>
     </main>

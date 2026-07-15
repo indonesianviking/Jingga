@@ -51,7 +51,7 @@ export function LicenseInfoCard({ karyaId, issuerWallet, userWallet, isOwner }: 
     );
   }
 
-  // Check if user already holds a license
+  /* Check if user already holds a license */
   const userLicense = data?.licenses?.find(
     (l) => l.purchaser_wallet === userWallet && l.status === 'active'
   );

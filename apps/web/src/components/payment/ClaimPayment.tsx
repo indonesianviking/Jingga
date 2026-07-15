@@ -76,17 +76,17 @@ export function ClaimPayment({
     setError('');
 
     try {
-      // Step 1: Initiate claimable balance creation
+      /* Step 1: Initiate claimable balance creation */
       const { xdr } = await apiRequest(`${API_BASE}/api/v1/payments/claimable/initiate`, {
         method: 'POST',
         body: JSON.stringify({ karya_id: karyaId }),
       });
 
-      // Step 2: Sign with Freighter (buyer signs — deposit XLM into escrow)
+      /* Step 2: Sign with Freighter (buyer signs - deposit XLM into escrow) */
       setState('signing');
       const signedXdr = await signWithFreighter(xdr);
 
-      // Step 3: Submit claimable balance (buyer gets immediate access)
+      /* Step 3: Submit claimable balance (buyer gets immediate access) */
       setState('submitting');
       const result = await apiRequest(`${API_BASE}/api/v1/payments/claimable/create`, {
         method: 'POST',
@@ -221,7 +221,7 @@ export function ClaimPayment({
     );
   }
 
-  // Idle state
+  /* Idle state */
   return (
     <div className="bg-canvas border border-hairline p-xl">
       <h3 className="text-card-title text-ink mb-sm">Payment via Claimable Balance</h3>

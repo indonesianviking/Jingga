@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../lib/api';
 
-// Reader dashboard overview
+/* Reader dashboard overview */
 export interface ReaderStats {
   totalPurchased: number;
   totalSpent: number;
@@ -34,7 +34,7 @@ export interface ReaderDashboard {
   recommendations: Recommendation[];
 }
 
-// Purchase list item
+/* Purchase list item */
 export interface PurchaseListItem {
   karya_id: string;
   judul: string;
@@ -60,14 +60,14 @@ export interface PurchaseListResponse {
   pagination: Pagination;
 }
 
-// Access URL response
+/* Access URL response */
 export interface AccessUrlResponse {
   accessUrl: string;
   expiresAt: string;
   judul: string;
 }
 
-// Hook for reader dashboard
+/* Hook for reader dashboard */
 export function useReaderDashboard() {
   const [data, setData] = useState<ReaderDashboard | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,7 +93,7 @@ export function useReaderDashboard() {
   return { data, loading, error, refetch: fetchDashboard };
 }
 
-// Hook for purchase list
+/* Hook for purchase list */
 export function usePurchaseList(kategori?: string, page: number = 1) {
   const [data, setData] = useState<PurchaseListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,7 +125,7 @@ export function usePurchaseList(kategori?: string, page: number = 1) {
   return { data, loading, error, refetch: fetchPurchases };
 }
 
-// Get access URL for purchased karya
+/* Get access URL for purchased karya */
 export async function getAccessUrl(karyaId: string): Promise<AccessUrlResponse> {
   return apiRequest<AccessUrlResponse>(`/api/v1/reader/access/${karyaId}`, {
     method: 'POST',

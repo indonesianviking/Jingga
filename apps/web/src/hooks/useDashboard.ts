@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../lib/api';
 
-// Dashboard overview
+/* Dashboard overview */
 export interface DashboardStats {
   totalKarya: number;
   totalPublished: number;
@@ -42,7 +42,7 @@ export interface DashboardOverview {
   recentKarya: RecentKarya[];
 }
 
-// Karya list
+/* Karya list */
 export interface KaryaListItem {
   id: string;
   judul: string;
@@ -70,7 +70,7 @@ export interface KaryaListResponse {
   pagination: Pagination;
 }
 
-// Transaction history
+/* Transaction history */
 export interface Transaction {
   id: string;
   karya_id: string;
@@ -95,7 +95,7 @@ export interface TransactionHistoryResponse {
   summary: TransactionSummary;
 }
 
-// Revenue breakdown
+/* Revenue breakdown */
 export interface RevenueItem {
   karya_id: string;
   judul: string;
@@ -110,7 +110,7 @@ export interface RevenueBreakdownResponse {
   totalRevenue: number;
 }
 
-// Hook for dashboard overview
+/* Hook for dashboard overview */
 export function useDashboardOverview() {
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,7 +136,7 @@ export function useDashboardOverview() {
   return { data, loading, error, refetch: fetchOverview };
 }
 
-// Hook for karya list
+/* Hook for karya list */
 export function useDashboardKarya(status?: string, page: number = 1) {
   const [data, setData] = useState<KaryaListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -168,7 +168,7 @@ export function useDashboardKarya(status?: string, page: number = 1) {
   return { data, loading, error, refetch: fetchKarya };
 }
 
-// Hook for transaction history
+/* Hook for transaction history */
 export function useDashboardTransactions(karyaId?: string, page: number = 1) {
   const [data, setData] = useState<TransactionHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,7 +200,7 @@ export function useDashboardTransactions(karyaId?: string, page: number = 1) {
   return { data, loading, error, refetch: fetchTransactions };
 }
 
-// Hook for revenue breakdown
+/* Hook for revenue breakdown */
 export function useDashboardRevenue() {
   const [data, setData] = useState<RevenueBreakdownResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -226,7 +226,7 @@ export function useDashboardRevenue() {
   return { data, loading, error, refetch: fetchRevenue };
 }
 
-// Archive karya
+/* Archive karya */
 export async function archiveKarya(karyaId: string): Promise<boolean> {
   await apiRequest(`/api/v1/dashboard/archive/${karyaId}`, {
     method: 'POST',

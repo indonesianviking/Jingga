@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 interface CachedRoom {
   id: string;
@@ -18,9 +18,9 @@ interface CachedRoom {
 const STORAGE_KEY = 'jingga_recent_rooms';
 const MAX_CACHED_ROOMS = 10;
 
-// ============================================================
-// Helpers
-// ============================================================
+/* ============================================================ */
+/* Helpers */
+/* ============================================================ */
 
 function getCachedRooms(): CachedRoom[] {
   try {
@@ -59,38 +59,38 @@ function extractRoomId(input: string): string | null {
   if (!trimmed) return null;
 
   try {
-    // If it looks like a full URL (with origin), parse it
+    /* If it looks like a full URL (with origin), parse it */
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       const url = new URL(trimmed);
       const room = url.searchParams.get('room');
       if (room) return room;
     }
 
-    // If someone types just "room=xxx" without ? prefix
+    /* If someone types just "room=xxx" without ? prefix */
     if (trimmed.startsWith('room=')) {
       return trimmed.slice(5);
     }
 
-    // If it looks like a path + query (starts with / or ?), extract from query
+    /* If it looks like a path + query (starts with / or ?), extract from query */
     if (trimmed.startsWith('/') || trimmed.startsWith('?')) {
-      // Normalize: prepend a fake origin to make URL parsing work
+      /* Normalize: prepend a fake origin to make URL parsing work */
       const fakeUrl = new URL(`http://x${trimmed.startsWith('/') ? '' : '/'}${trimmed}`);
       const room = fakeUrl.searchParams.get('room');
       if (room) return room;
     }
   } catch {
-    // URL parsing failed — try regex fallback
+    /* URL parsing failed - try regex fallback */
     const match = trimmed.match(/[?&]room=([^&]+)/);
     if (match) return decodeURIComponent(match[1]);
   }
 
-  // Plain session ID — return as-is
+  /* Plain session ID - return as-is */
   return trimmed;
 }
 
-// ============================================================
-// Component
-// ============================================================
+/* ============================================================ */
+/* Component */
+/* ============================================================ */
 
 export default function JoinPage() {
   const router = useRouter();
@@ -100,7 +100,7 @@ export default function JoinPage() {
   const [recentRooms, setRecentRooms] = useState<CachedRoom[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Load recent rooms from localStorage
+  /* Load recent rooms from localStorage */
   useEffect(() => {
     setRecentRooms(getCachedRooms());
   }, []);
@@ -118,7 +118,7 @@ export default function JoinPage() {
       return;
     }
 
-    // Extract clean room ID from any input format
+    /* Extract clean room ID from any input format */
     const extracted = extractRoomId(raw);
     if (!extracted) {
       setError('Could not extract a valid session ID from that input');
@@ -330,9 +330,9 @@ export default function JoinPage() {
   );
 }
 
-// ============================================================
-// Helper
-// ============================================================
+/* ============================================================ */
+/* Helper */
+/* ============================================================ */
 
 function formatRelativeTime(timestamp: number): string {
   const diff = Date.now() - timestamp;

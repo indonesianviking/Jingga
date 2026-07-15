@@ -42,7 +42,7 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
           setHasPurchased(data.purchased);
         }
       } catch (err) {
-        // Silently fail
+        /* Silently fail */
       } finally {
         setChecking(false);
       }
@@ -78,7 +78,7 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
     return <FileAccess karyaId={karyaId} />;
   }
 
-  // Show active payment flow
+  /* Show active payment flow */
   if (activeFlow === 'direct') {
     return (
       <PurchaseFlow
@@ -128,7 +128,7 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
     );
   }
 
-  // Default: show payment method selection
+  /* Default: show payment method selection */
   return (
     <div className="space-y-md">
       <PaymentMethodSelector
@@ -146,9 +146,9 @@ export function BuyButton({ karyaId, judul, harga, issuerWallet, isOwner, onPurc
   );
 }
 
-// ============================================================
-// Path Payment Flow sub-component
-// ============================================================
+/* ============================================================ */
+/* Path Payment Flow sub-component */
+/* ============================================================ */
 function PathPaymentFlow({
   karyaId,
   judul,
@@ -180,7 +180,7 @@ function PathPaymentFlow({
     setError('');
 
     try {
-      // 1. Fetch exchange rate to calculate stablecoin amount
+      /* 1. Fetch exchange rate to calculate stablecoin amount */
       const token = getToken();
       const ratesRes = await fetch(`${API_BASE}/api/v1/payments/rates`);
       if (!ratesRes.ok) throw new Error('Failed to fetch exchange rates');
@@ -188,7 +188,7 @@ function PathPaymentFlow({
       const rate = ratesData.rates?.find((r: any) => r.asset === sourceAsset)?.price_in_xlm || 0.5;
       const stableAmount = harga / rate;
 
-      // 2. Initiate path payment
+      /* 2. Initiate path payment */
       setState('signing');
       const initRes = await fetch(`${API_BASE}/api/v1/payments/path/initiate`, {
         method: 'POST',
@@ -210,14 +210,14 @@ function PathPaymentFlow({
 
       const { xdr, quote } = await initRes.json();
 
-      // 4. Sign with Freighter via lib/freighter
+      /* 4. Sign with Freighter via lib/freighter */
       const available = await waitForFreighter(5000);
       if (!available) {
         throw new Error('Freighter wallet not detected. Please make sure the Freighter extension is installed and unlocked.');
       }
       const signedXdr = await signTransaction(xdr, getNetworkPassphrase());
 
-      // 5. Confirm path payment
+      /* 5. Confirm path payment */
       setState('confirming');
       const confirmRes = await fetch(`${API_BASE}/api/v1/payments/path/confirm`, {
         method: 'POST',

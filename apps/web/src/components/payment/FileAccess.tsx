@@ -36,7 +36,7 @@ export function FileAccess({ karyaId }: FileAccessProps) {
       const token = getToken();
 
       try {
-        // Check purchase status
+        /* Check purchase status */
         const checkRes = await fetch(`${API_BASE}/api/v1/payments/check/${karyaId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -48,7 +48,7 @@ export function FileAccess({ karyaId }: FileAccessProps) {
         const checkData = await checkRes.json();
         setAccess(checkData);
 
-        // If purchased, fetch access URL
+        /* If purchased, fetch access URL */
         if (checkData.purchased) {
           setLoadingUrl(true);
           try {
@@ -65,7 +65,7 @@ export function FileAccess({ karyaId }: FileAccessProps) {
               setAccessUrlData(urlData);
             }
           } catch {
-            // Access URL fetch is non-critical
+            /* Access URL fetch is non-critical */
           } finally {
             setLoadingUrl(false);
           }

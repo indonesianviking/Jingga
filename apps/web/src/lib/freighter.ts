@@ -1,7 +1,7 @@
 /**
  * Freighter wallet integration using @stellar/freighter-api v6.0.1
  *
- * IMPORTANT: In v6, the function is getAddress() — NOT getPublicKey().
+ * IMPORTANT: In v6, the function is getAddress() - NOT getPublicKey().
  * The package handles all window injection detection internally.
  */
 
@@ -22,13 +22,13 @@ async function getFreighterApi(): Promise<any> {
 /**
  * Check if Freighter extension is installed in the browser.
  * This checks if the extension has injected its API into window.
- * It does NOT check if the user has authorized the dApp — use isConnected() for that.
+ * It does NOT check if the user has authorized the dApp - use isConnected() for that.
  */
 export async function isFreighterInstalled(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
-  // 1. Direct window check — fastest, synchronous, no API call needed
-  // The Freighter extension injects window.freighterApi (modern) or window.freighter (legacy)
+  /* 1. Direct window check - fastest, synchronous, no API call needed */
+  /* The Freighter extension injects window.freighterApi (modern) or window.freighter (legacy) */
   if ((window as any).freighterApi) {
     console.log('[Freighter] Detected window.freighterApi ✓');
     return true;
@@ -38,7 +38,7 @@ export async function isFreighterInstalled(): Promise<boolean> {
     return true;
   }
 
-  // 2. Try the npm package as fallback
+  /* 2. Try the npm package as fallback */
   const api = await getFreighterApi();
   if (api && typeof api.isConnected === 'function') {
     try {
@@ -48,7 +48,7 @@ export async function isFreighterInstalled(): Promise<boolean> {
         return true;
       }
     } catch {
-      // isConnected might throw if not installed
+      /* isConnected might throw if not installed */
     }
   }
 
@@ -65,7 +65,7 @@ export async function isFreighterInstalled(): Promise<boolean> {
 export async function waitForFreighter(maxWait = 5000): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
-  // Already detected via window property?
+  /* Already detected via window property? */
   if ((window as any).freighterApi || (window as any).freighter) {
     console.log('[Freighter] Detected via window property ✓');
     return true;
@@ -74,14 +74,14 @@ export async function waitForFreighter(maxWait = 5000): Promise<boolean> {
   const startTime = Date.now();
   return new Promise((resolve) => {
     const check = async () => {
-      // Check window properties
+      /* Check window properties */
       if ((window as any).freighterApi || (window as any).freighter) {
         console.log('[Freighter] Extension detected after wait ✓');
         resolve(true);
         return;
       }
 
-      // Try npm package import as fallback
+      /* Try npm package import as fallback */
       const api = await getFreighterApi();
       if (api && typeof api.isConnected === 'function') {
         try {
@@ -92,11 +92,11 @@ export async function waitForFreighter(maxWait = 5000): Promise<boolean> {
             return;
           }
         } catch {
-          // isConnected threw, extension may not be ready
+          /* isConnected threw, extension may not be ready */
         }
       }
 
-      // Timeout check
+      /* Timeout check */
       if (Date.now() - startTime >= maxWait) {
         console.log('[Freighter] Timed out waiting for extension after ' + maxWait + 'ms');
         resolve(false);
@@ -111,22 +111,22 @@ export async function waitForFreighter(maxWait = 5000): Promise<boolean> {
 
 /**
  * Get the user's Stellar address (public key).
- * v6 uses getAddress() — NOT getPublicKey().
+ * v6 uses getAddress() - NOT getPublicKey().
  */
 export async function getPublicKey(): Promise<string> {
-  // Wait for extension injection first
+  /* Wait for extension injection first */
   await waitForFreighter(3000);
 
   const api = await getFreighterApi();
   if (!api) throw new Error('Freighter is not installed. Please install the Freighter browser extension.');
 
-  // v6: getAddress() returns { address: string } or just the address string
+  /* v6: getAddress() returns { address: string } or just the address string */
   if (typeof api.getAddress === 'function') {
     const result = await api.getAddress();
 
-    // Handle both return formats:
-    // - { address: "G..." } (object with address property)
-    // - "G..." (plain string)
+    /* Handle both return formats: */
+    /* - { address: "G..." } (object with address property) */
+    /* - "G..." (plain string) */
     if (typeof result === 'string') {
       return result;
     }
@@ -167,13 +167,13 @@ export async function signMessage(message: string): Promise<string | null> {
  * Also handles error case: { signedTxXdr: '', signerAddress: '', error: {...} }
  */
 function normalizeSignedXdr(result: unknown): string {
-  // Case 1: plain string (legacy format)
+  /* Case 1: plain string (legacy format) */
   if (typeof result === 'string') return result;
 
   if (result && typeof result === 'object') {
     const obj = result as Record<string, unknown>;
 
-    // Extract error first (Freighter v6 returns error object on failure)
+    /* Extract error first (Freighter v6 returns error object on failure) */
     const err = obj.error;
     if (err) {
       const errMsg =
@@ -183,23 +183,23 @@ function normalizeSignedXdr(result: unknown): string {
       throw new Error(`Freighter signing rejected: ${errMsg}`);
     }
 
-    // Freighter v6+ format: { signedTxXdr: "AAAA..." }
+    /* Freighter v6+ format: { signedTxXdr: "AAAA..." } */
     if (typeof obj.signedTxXdr === 'string' && obj.signedTxXdr.length > 0) {
       return obj.signedTxXdr;
     }
 
-    // Alternative: { signedXdr: "AAAA..." }
+    /* Alternative: { signedXdr: "AAAA..." } */
     if (typeof obj.signedXdr === 'string' && obj.signedXdr.length > 0) {
       return obj.signedXdr;
     }
 
-    // Last resort: grab first non-empty string value
+    /* Last resort: grab first non-empty string value */
     const strValue = Object.values(obj).find(
       (v): v is string => typeof v === 'string' && v.length > 0
     );
     if (strValue) return strValue;
 
-    // Log the unrecognized response for debugging
+    /* Log the unrecognized response for debugging */
     console.error('[Freighter] Unrecognized signTransaction response:', obj);
     throw new Error(
       `Freighter returned an unrecognized format: ${JSON.stringify(obj).slice(0, 200)}`
@@ -221,7 +221,7 @@ export async function signTransaction(xdr: string, network?: string): Promise<st
 
   console.log('[Freighter] signTransaction called, network:', network?.slice(0, 20));
 
-  // 1. Try npm package
+  /* 1. Try npm package */
   const api = await getFreighterApi();
   if (api && typeof api.signTransaction === 'function') {
     console.log('[Freighter] Using npm package signTransaction');
@@ -231,7 +231,7 @@ export async function signTransaction(xdr: string, network?: string): Promise<st
     return normalizeSignedXdr(result);
   }
 
-  // 2. Try window.freighterApi (Freighter v6+ direct injection)
+  /* 2. Try window.freighterApi (Freighter v6+ direct injection) */
   if (typeof (window as any).freighterApi?.signTransaction === 'function') {
     console.log('[Freighter] Using window.freighterApi signTransaction');
     const result = await (window as any).freighterApi.signTransaction(xdr, opts);
@@ -239,7 +239,7 @@ export async function signTransaction(xdr: string, network?: string): Promise<st
     return normalizeSignedXdr(result);
   }
 
-  // 3. Try window.freighter (legacy injection)
+  /* 3. Try window.freighter (legacy injection) */
   if (typeof (window as any).freighter?.signTransaction === 'function') {
     console.log('[Freighter] Using window.freighter signTransaction');
     const result = await (window as any).freighter.signTransaction(xdr, opts);

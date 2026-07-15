@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { WebsocketProvider } from 'y-websocket';
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 interface AwarenessUser {
   name: string;
@@ -16,22 +16,22 @@ interface AwarenessUser {
 
 interface RoomUsersProps {
   provider: WebsocketProvider;
-  /** Current user's info — excluded from the "others" list if matched */
+  /** Current user's info - excluded from the "others" list if matched */
   currentUser: AwarenessUser;
 }
 
-// ============================================================
-// Component
-// ============================================================
+/* ============================================================ */
+/* Component */
+/* ============================================================ */
 
 export function RoomUsers({ provider, currentUser }: RoomUsersProps) {
   const [others, setOthers] = useState<AwarenessUser[]>([]);
   const [total, setTotal] = useState(1);
-  // Use ref to avoid effect re-running when currentUser object reference changes
+  /* Use ref to avoid effect re-running when currentUser object reference changes */
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
 
-  // Listen to Yjs awareness changes
+  /* Listen to Yjs awareness changes */
   useEffect(() => {
     const awareness = provider.awareness;
 
@@ -46,7 +46,7 @@ export function RoomUsers({ provider, currentUser }: RoomUsersProps) {
         const user = state?.user as AwarenessUser | undefined;
         if (!user?.name) return;
 
-        // Skip current user (matched by name + color)
+        /* Skip current user (matched by name + color) */
         if (user.name === me.name && user.color === me.color) {
           return;
         }
@@ -58,10 +58,10 @@ export function RoomUsers({ provider, currentUser }: RoomUsersProps) {
       setTotal(states.size);
     };
 
-    // Initial update
+    /* Initial update */
     update();
 
-    // Listen for awareness changes (fires on connect/disconnect/update)
+    /* Listen for awareness changes (fires on connect/disconnect/update) */
     awareness.on('change', update);
 
     return () => {

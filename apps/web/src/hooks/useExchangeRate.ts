@@ -37,7 +37,7 @@ export function useExchangeRate() {
 
   useEffect(() => {
     fetchRates();
-    // Refresh every 60 seconds
+    /* Refresh every 60 seconds */
     const interval = setInterval(fetchRates, 60000);
     return () => clearInterval(interval);
   }, [fetchRates]);

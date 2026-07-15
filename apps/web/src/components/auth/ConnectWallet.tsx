@@ -51,14 +51,11 @@ export function ConnectWallet() {
             <div className="px-md py-sm border-b border-hairline">
               <p className="text-caption text-ink-subtle">Wallet</p>
               <p className="text-body-sm text-ink font-mono break-all">{truncateAddress(walletAddress, 8)}</p>
-              <span className="text-caption text-ink-subtle">
-                {authMethod === 'email' ? 'Managed Wallet' : 'Freighter'}
-              </span>
+              <span className="text-caption text-ink-subtle">Freighter</span>
             </div>
             {user && (
               <div className="px-md py-sm border-b border-hairline">
                 <p className="text-body-sm text-ink">{user.nama}</p>
-                {user.email && <p className="text-caption text-ink-subtle">{user.email}</p>}
               </div>
             )}
             {/* Badge Showcase */}
@@ -82,12 +79,20 @@ export function ConnectWallet() {
 
   return (
     <div className="flex items-center gap-sm">
-      <Button onClick={connectFreighter} variant="primary" size="md">
-        Connect Wallet
-      </Button>
-      <a href="/login" className="text-body-sm text-ink-muted hover:text-primary transition-colors">
-        Sign in
-      </a>
+      {isFreighterAvailable ? (
+        <Button onClick={connectFreighter} variant="primary" size="md">
+          Connect Wallet
+        </Button>
+      ) : (
+        <a
+          href="https://www.freighter.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-primary text-on-primary text-button py-sm px-md hover:bg-primary-hover transition-colors"
+        >
+          Install Freighter
+        </a>
+      )}
       {error && <p className="text-caption text-semantic-error">{error}</p>}
     </div>
   );

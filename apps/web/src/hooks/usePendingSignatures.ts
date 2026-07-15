@@ -62,9 +62,9 @@ export function usePendingSignatures() {
   useEffect(() => {
     fetchPending();
 
-    // Auto-refresh every 30s if there are pending items
+    /* Auto-refresh every 30s if there are pending items */
     const interval = setInterval(() => {
-      // Only re-fetch if we know there are pending or we haven't loaded yet
+      /* Only re-fetch if we know there are pending or we haven't loaded yet */
       fetchPending();
     }, 30000);
 

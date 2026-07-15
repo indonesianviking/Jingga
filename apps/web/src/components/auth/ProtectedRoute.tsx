@@ -32,24 +32,23 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             Sign in to access this page.
           </p>
           <div className="flex flex-col gap-sm items-center">
-            {isFreighterAvailable && (
+            {isFreighterAvailable ? (
               <Button onClick={connectFreighter} variant="primary" size="lg">
                 Connect Wallet
               </Button>
-            )}
-            <a href="/login" className="text-body-sm text-primary hover:underline">
-              Sign in with email
-            </a>
-            {!isFreighterAvailable && (
+            ) : (
               <a
                 href="https://www.freighter.app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-body-sm text-ink-muted hover:text-primary"
+                className="bg-primary text-on-primary text-button py-sm px-md hover:bg-primary-hover transition-colors"
               >
                 Install Freighter
               </a>
             )}
+            <a href="/login" className="text-body-sm text-ink-muted hover:text-primary transition-colors">
+              Sign In
+            </a>
           </div>
         </div>
       </div>

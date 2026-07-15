@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 type Theme = 'light' | 'dark';
 
@@ -15,22 +15,22 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
-// ============================================================
-// Context
-// ============================================================
+/* ============================================================ */
+/* Context */
+/* ============================================================ */
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
 const STORAGE_KEY = 'jingga_theme';
 
-// ============================================================
-// Provider
-// ============================================================
+/* ============================================================ */
+/* Provider */
+/* ============================================================ */
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
 
-  // Initialize from localStorage or system preference on mount
+  /* Initialize from localStorage or system preference on mount */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (saved === 'light' || saved === 'dark') {
@@ -40,7 +40,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Apply theme class to <html>
+  /* Apply theme class to <html> */
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -73,9 +73,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ============================================================
-// Hook
-// ============================================================
+/* ============================================================ */
+/* Hook */
+/* ============================================================ */
 
 export function useTheme() {
   const context = useContext(ThemeContext);

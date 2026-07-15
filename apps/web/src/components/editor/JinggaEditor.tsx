@@ -20,12 +20,12 @@ import { common, createLowlight } from 'lowlight';
 import { API_BASE, getAuthToken } from '@/lib/api';
 import { SlashCommandExtension } from './slash-command';
 
-// Load lowlight for syntax highlighting
+/* Load lowlight for syntax highlighting */
 const lowlight = createLowlight(common);
 
-// ============================================================
-// Types
-// ============================================================
+/* ============================================================ */
+/* Types */
+/* ============================================================ */
 
 interface CollaborationConfig {
   ydoc: Y.Doc;
@@ -43,9 +43,9 @@ interface JinggaEditorProps {
   collaboration?: CollaborationConfig;
 }
 
-// ============================================================
-// Toolbar Button Components
-// ============================================================
+/* ============================================================ */
+/* Toolbar Button Components */
+/* ============================================================ */
 
 function ToolbarButton({
   onClick,
@@ -81,9 +81,9 @@ function ToolbarDivider() {
   return <div className="w-px h-md bg-hairline mx-xs" />;
 }
 
-// ============================================================
-// Image Resize Extension (custom, extends @tiptap/extension-image)
-// ============================================================
+/* ============================================================ */
+/* Image Resize Extension (custom, extends @tiptap/extension-image) */
+/* ============================================================ */
 
 const ResizableImage = ImageExt.extend({
   addAttributes() {
@@ -104,9 +104,9 @@ const ResizableImage = ImageExt.extend({
   },
 });
 
-// ============================================================
-// Main Editor Component
-// ============================================================
+/* ============================================================ */
+/* Main Editor Component */
+/* ============================================================ */
 
 export default function JinggaEditor({
   initialContent = '',
@@ -122,7 +122,7 @@ export default function JinggaEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        // Disable codeBlock from StarterKit — we use CodeBlockLowlight instead
+        /* Disable codeBlock from StarterKit - we use CodeBlockLowlight instead */
         codeBlock: false,
       }),
       ResizableImage.configure({
@@ -145,7 +145,7 @@ export default function JinggaEditor({
         lowlight,
         defaultLanguage: 'javascript',
       }),
-      // Tables
+      /* Tables */
       Table.configure({
         resizable: true,
         allowTableNodeSelection: true,
@@ -153,10 +153,10 @@ export default function JinggaEditor({
       TableRow,
       TableCell,
       TableHeader,
-      // Slash Commands
+      /* Slash Commands */
       SlashCommandExtension,
-      // Collaboration (real-time co-editing via Yjs)
-      // (Cursor overlay is handled by a separate component via Yjs awareness)
+      /* Collaboration (real-time co-editing via Yjs) */
+      /* (Cursor overlay is handled by a separate component via Yjs awareness) */
       ...(collaboration
         ? [
             Collaboration.configure({
@@ -168,7 +168,7 @@ export default function JinggaEditor({
     content: initialContent || '<p></p>',
     editable,
     onUpdate: ({ editor: e }) => {
-      // Don't send empty paragraphs as content
+      /* Don't send empty paragraphs as content */
       const html = e.getHTML();
       const trimmed = html.replace(/<br[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
       const isEmpty =
@@ -177,9 +177,9 @@ export default function JinggaEditor({
     },
   });
 
-  // ============================================================
-  // Custom slash command image trigger
-  // ============================================================
+  /* ============================================================ */
+  /* Custom slash command image trigger */
+  /* ============================================================ */
   useEffect(() => {
     const handler = () => {
       fileInputRef.current?.click();
@@ -190,14 +190,14 @@ export default function JinggaEditor({
     };
   }, []);
 
-  // ============================================================
-  // Image Upload Handler
-  // ============================================================
+  /* ============================================================ */
+  /* Image Upload Handler */
+  /* ============================================================ */
   const handleImageUpload = useCallback(
     async (file: File) => {
       if (!editor) return;
 
-      // For small images, use base64 inline
+      /* For small images, use base64 inline */
       if (file.size < 500 * 1024) {
         const reader = new FileReader();
         reader.onload = () => {
@@ -211,7 +211,7 @@ export default function JinggaEditor({
         return;
       }
 
-      // For larger images, upload to server
+      /* For larger images, upload to server */
       try {
         const formData = new FormData();
         formData.append('file', file);
@@ -225,7 +225,7 @@ export default function JinggaEditor({
           const { url } = await res.json();
           editor.chain().focus().setImage({ src: url }).run();
         } else {
-          // Fallback to base64
+          /* Fallback to base64 */
           const reader = new FileReader();
           reader.onload = () => {
             editor
@@ -237,7 +237,7 @@ export default function JinggaEditor({
           reader.readAsDataURL(file);
         }
       } catch {
-        // Fallback to base64
+        /* Fallback to base64 */
         const reader = new FileReader();
         reader.onload = () => {
           editor
@@ -572,7 +572,7 @@ export default function JinggaEditor({
       />
 
       {/* ------------------------------------------------------- */}
-      {/* Editor Content — Paper-like A4 pages */}
+      {/* Editor Content - Paper-like A4 pages */}
       {/* ------------------------------------------------------- */}
       <div className="paper-editor-wrapper">
         <EditorContent
@@ -609,9 +609,9 @@ export default function JinggaEditor({
   );
 }
 
-// ============================================================
-// Helper
-// ============================================================
+/* ============================================================ */
+/* Helper */
+/* ============================================================ */
 
 function getWordCount(text: string): number {
   if (!text.trim()) return 0;
